@@ -8,6 +8,7 @@ from IPython.display import clear_output
 from redutor_de_base import *
 from ajusta_teto_cohort import *
 from colored import colored
+import time
 
 
 
@@ -66,7 +67,7 @@ def building_blocks(inputs_df,
   qtd_tof = 0
   for tof in lista_bb_tof:
 
-    clear_output(wait=True)
+    #clear_output(wait=True)
     print_string = 'Calculando Funil Baseline do ToF: '+colored(tof,'y')
     empty_string = " "*(50-len(print_string))
     print(60*" ",end='\r')
@@ -87,16 +88,21 @@ def building_blocks(inputs_df,
 
 
     # Geramos o baseline de conversões
+    start_time = time.time()
     base_cohort,inputs = gerador_baseline_conversoes_v2(baseline_cohort_df = baseline_cohort,
                                                         inputs_df = baseline_df_tof,
                                                         dict_grupos = dict_grupos,
                                                         nome_coluna_week_origin = nome_coluna_week_origin,
                                                         coluna_de_semanas = coluna_de_semanas)
+    print("gerador_baseline_conversoes_v2 ",str(time.time() - start_time))
 
+    start_time = time.time()
     base_cohort = ajusta_teto_cohort(df_cohort = base_cohort,
                                      nome_coluna_week_origin = nome_coluna_week_origin)
-
+    print("ajusta_teto_cohort ",str(time.time() - start_time))
+    
     # Rodamos o funil:
+    start_time = time.time()
     output_cohort_baseline,output_coincident_baseline,topo_de_funil,topos_de_funil = Funil_Dinamico_DataFrame(df_ToF = ToF_semanal_tof,             
                                                                                             df_cohort = base_cohort,            
                                                                                             df_ratio = base_df_on_top,             
@@ -104,7 +110,7 @@ def building_blocks(inputs_df,
                                                                                             nome_coluna_week_origin = nome_coluna_week_origin,
                                                                                             aplicacao_ajuste = aplicacao_ajuste,
                                                                                             coluna_de_semanas = coluna_de_semanas)
-    
+    print("Funil_Dinamico_DataFrame ",str(time.time() - start_time))
     
     output_cohort_baseline[coluna_de_semanas] = pd.to_datetime(output_cohort_baseline[coluna_de_semanas], infer_datetime_format=True)
     output_coincident_baseline[coluna_de_semanas] = pd.to_datetime(output_coincident_baseline[coluna_de_semanas], infer_datetime_format=True)
@@ -165,16 +171,21 @@ def building_blocks(inputs_df,
         inputs_projeto_df = inputs_projeto_df.drop(columns=['building block cohort'])
 
         # Geramos o baseline de conversões
+        start_time = time.time()
         base_cohort,inputs = gerador_baseline_conversoes_v2(baseline_cohort_df = baseline_cohort,
                                                             inputs_df = inputs_projeto_df,
                                                             dict_grupos = dict_grupos,
                                                             nome_coluna_week_origin = nome_coluna_week_origin,
                                                             coluna_de_semanas = coluna_de_semanas)
+        print("gerador_baseline_conversoes_v2 ",str(time.time() - start_time))
 
+        start_time = time.time()
         base_cohort = ajusta_teto_cohort(df_cohort = base_cohort,
                                         nome_coluna_week_origin = nome_coluna_week_origin)
-
+        print("ajusta_teto_cohort ",str(time.time() - start_time))
+        
         # Rodamos o funil:
+        start_time = time.time()
         output_cohort_projeto,output_coincident_projeto,topo_de_funil,topos_de_funil = Funil_Dinamico_DataFrame(df_ToF = ToF_semanal_tof,             
                                                                                                 df_cohort = base_cohort,            
                                                                                                 df_ratio = base_df_on_top,             
@@ -182,8 +193,9 @@ def building_blocks(inputs_df,
                                                                                                 nome_coluna_week_origin = nome_coluna_week_origin,
                                                                                                 aplicacao_ajuste = aplicacao_ajuste,
                                                                                                 coluna_de_semanas = coluna_de_semanas)
-      
-      
+        print("Funil_Dinamico_DataFrame ",str(time.time() - start_time))
+
+        start_time = time.time()
         # Subtrair os valores de baseline para ficar somente com oq o projeto agrega:
         #-----------------------------------------------------------------------------------------------
 
@@ -205,6 +217,7 @@ def building_blocks(inputs_df,
         output_cohort_projeto['building block cohort'] = projeto
         output_coincident_projeto['building block cohort'] = projeto
 
+        print("Restante ",str(time.time() - start_time))
       
       else:
         output_cohort_projeto = pd.DataFrame()
