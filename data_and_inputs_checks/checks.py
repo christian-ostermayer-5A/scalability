@@ -2566,3 +2566,69 @@ def check_bases_realizadas(df_realizado_mensal,
 
   return df_realizado_mensal,df_realizado_cohort,df_realizado_tp,df_metas_tp,erros,mensagem
 
+#@title Def check_datas_abse_share_diario
+
+def check_datas_base_share_diario(df_parametro,
+                             data_inicio,
+                             data_fim,
+                             coluna_semanas,
+                             coluna_datas
+):
+
+  # Definições iniciais
+  #-------------------------------------------------------------------------------------------------
+  mensagem = ''
+
+  erro = 0
+
+  #Convertendo as datas para depois filtrar
+  df_parametro[coluna_semanas] = pd.to_datetime(df_parametro[coluna_semanas], infer_datetime_format = True)
+  df_parametro[coluna_datas] = pd.to_datetime(df_parametro[coluna_datas], infer_datetime_format = True)
+
+  #Filtra o DataFrame com base nas datas
+  df_parametro_filtrado = df_parametro[(df_parametro[coluna_semanas] >= data_inicio) & (df_parametro[coluna_semanas] <= data_fim)]
+
+  #Check de qtd de semanas. Se forem 2 ou menos não rodar.
+  if len(df_parametro_filtrado[coluna_semanas].unique()) < 2:
+    mensagem = mensagem+colored("\nA quantidade de semanas na base definida é menor que três.\nEscolha um mínimo de três semanas para que o share tenha um melhor espaço amostral.\n", 'red')
+    erro = erro+1
+
+
+  #Criar dois dfs separados somente a data início e data fim
+  df_parametro_filtrado_inicio = df_parametro_filtrado[df_parametro_filtrado[coluna_semanas] == data_inicio]
+  df_parametro_filtrado_fim = df_parametro_filtrado[df_parametro_filtrado[coluna_semanas] == data_fim]
+
+
+  #Verificar se a data de piso é segunda-feira
+  if data_inicio.weekday() == 0:
+  # Verifique se há 7 datas nos DataFrames resultantes
+    if len(df_parametro_filtrado_inicio[coluna_datas].unique()) == 0:
+      mensagem = mensagem+colored("\nO week_start de piso preenchido no painel de controle não existe na base.\nPreencha um novo piso ou alimente com uma base com a semana de piso completa.\n", 'red')
+      erro = erro+1
+      #print("O week_start de piso preenchido no painel de controle não existe na base.\nPreencha um novo piso ou alimente com uma base com a semana de piso completa.")
+    elif len(df_parametro_filtrado_inicio[coluna_datas].unique()) != 7:
+      mensagem = mensagem+colored("\nO week_start de piso de corte não contém todos os 7 dias da semana.\nPreencha um novo piso ou alimente com uma base com a semana de piso completa.\n",'red')
+      erro = erro+1
+      #print("O week_start de piso de corte não contém todos os 7 dias da semana.\nPreencha um novo piso ou alimente com uma base com a semana de piso completa.")
+  else:
+    mensagem = mensagem+colored('\nA data de piso preenchida no painel de controle não é uma segunda-feira.\nAltere no painel para uma data que seja segunda-feira.\n','red')
+    erro = erro+1
+    #print(colored("A data de piso preenchida no painel de controle não é uma segunda-feira.\nAltere no painel para uma data que seja segunda-feira.",'red'))
+
+  #Verificar se a data de teto é segunda-feira
+  if data_fim.weekday() == 0:
+  # Verifique se há 7 datas nos DataFrames resultantes
+    if len(df_parametro_filtrado_fim[coluna_datas].unique()) == 0:
+      mensagem = mensagem+colored("\nO week_start de teto preenchido no painel de controle não existe na base.\nPreencha um novo teto ou alimente com uma base com a semana de teto completa.",'red')
+      erro = erro+1
+      #print("O week_start de teto preenchido no painel de controle não existe na base.\nPreencha um novo teto ou alimente com uma base com a semana de teto completa.")
+    elif len(df_parametro_filtrado_fim[coluna_datas].unique()) != 7:
+      mensagem = mensagem+colored("\nO week_start de teto de corte não contém todos os 7 dias da semana.\nPreencha um novo teto ou alimente com uma base com a semana de teto completa.",'red')
+      erro = erro+1
+      #print("O week_start de teto de corte não contém todos os 7 dias da semana.\nPreencha um novo teto ou alimente com uma base com a semana de teto completa.")
+  else:
+    mensagem = mensagem+colored("\nA data de teto preenchida no painel de controle não é uma segunda-feira.\nAltere no painel para uma data que seja segunda-feira.",'red')
+    erro = erro+1
+    #print("A data de teto preenchida no painel de controle não é uma segunda-feira.\nAltere no painel para uma data que seja segunda-feira.")
+
+  return mensagem,erro
