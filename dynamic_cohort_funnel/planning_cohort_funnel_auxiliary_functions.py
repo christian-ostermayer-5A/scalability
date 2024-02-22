@@ -261,7 +261,9 @@ def formatacao(base,
 
   output_cohort = base[cb_output_cohort]
   output_coincident = base.loc[base[nome_coluna_week_origin] == '0'][cb_output_coincident]
-
+                 
+  # Removemos possíveis valores negativos gerados pelas cohorts de ajuste
+  output_coincident = output_coincident.clip(lower=0)
 
 
 
