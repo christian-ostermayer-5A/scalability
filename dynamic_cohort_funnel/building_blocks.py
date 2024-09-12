@@ -98,7 +98,7 @@ def building_blocks(inputs_df,
 
     if tof_negativo:
       list_tof_negativo = list_tof_negativo + [tof]
-      ToF_semanal_tof = pd.concat([ToF_semanal_tof,ToF_semanal.loc[ToF_semanal['building block tof'] == 'Baseline']])
+      ToF_semanal_tof = pd.concat([ToF_semanal_tof,ToF_semanal.loc[ToF_semanal['building block tof'] == 'baseline']])
       ToF_semanal_tof = ToF_semanal_tof.groupby([coluna_de_semanas]+aberturas,as_index=False)[topos].sum()
 
 
@@ -264,8 +264,8 @@ def building_blocks(inputs_df,
     teste_coincident = output_coincident_tof_negativo.copy()
     
     # Vamos separar todos os projetos aplicados no tof baseline:
-    output_cohort_baseline = output_cohort_final_final.loc[output_cohort_final_final['building block tof'] == 'Baseline']
-    output_coincident_baseline = output_coincident_final_final.loc[output_coincident_final_final['building block tof'] == 'Baseline']
+    output_cohort_baseline = output_cohort_final_final.loc[output_cohort_final_final['building block tof'] == 'baseline']
+    output_coincident_baseline = output_coincident_final_final.loc[output_coincident_final_final['building block tof'] == 'baseline']
                                         
     output_cohort_baseline = output_cohort_baseline.drop(columns=['building block tof'])
     output_coincident_baseline = output_coincident_baseline.drop(columns=['building block tof'])
