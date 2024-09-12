@@ -272,10 +272,10 @@ def building_blocks(inputs_df,
 
     # Criar a diferença entre tof negativo e tof baseline:
     output_cohort_tof_negativo = pd.merge(output_cohort_tof_negativo,output_cohort_baseline,how='left',on=chaves_cohort+['building block cohort'])
-    output_cohort_tof_negativo[etapas_cohort] = output_cohort_tof_negativo[etapas_cohort_y].astype(float).values - output_cohort_tof_negativo[etapas_cohort_x].astype(float).values
+    output_cohort_tof_negativo[etapas_cohort] = output_cohort_tof_negativo[etapas_cohort_x].astype(float).values - output_cohort_tof_negativo[etapas_cohort_y].astype(float).values
 
     output_coincident_tof_negativo = pd.merge(output_coincident_tof_negativo,output_coincident_baseline,how='left',on=chaves_coincident+['building block cohort'])
-    output_coincident_tof_negativo[etapas_coincident] = output_coincident_tof_negativo[etapas_coincident_y].astype(float).values - output_coincident_tof_negativo[etapas_coincident_x].astype(float).values
+    output_coincident_tof_negativo[etapas_coincident] = output_coincident_tof_negativo[etapas_coincident_x].astype(float).values - output_coincident_tof_negativo[etapas_coincident_y].astype(float).values
 
     output_cohort_tof_negativo = output_cohort_tof_negativo.drop(columns=etapas_cohort_x+etapas_cohort_y)
     output_coincident_tof_negativo = output_coincident_tof_negativo.drop(columns=etapas_coincident_x+etapas_coincident_y)
