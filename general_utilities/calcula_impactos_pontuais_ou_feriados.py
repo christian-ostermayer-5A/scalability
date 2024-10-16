@@ -205,7 +205,10 @@ def compara_feriados(df, #dataframe utilizado para as contas
       print(col_delta)
       print(conv_weeks)
       print(col_interpoladas)
-      df_aux[col_delta[0]] = df_aux[conv_weeks[0]]/df_aux[col_interpoladas[0]] - 1
+      if len(conv_weeks) == 1:
+        df_aux[col_delta[0]] = df_aux[conv_weeks[0]].astype(float).values/df_aux[col_interpoladas[0]].astype(float).values - 1
+      else:
+        df_aux[col_delta] = df_aux[conv_weeks].astype(float).values/df_aux[col_interpoladas].astype(float).values - 1
       #-----------------------------------------------------------------------------------
 
 
