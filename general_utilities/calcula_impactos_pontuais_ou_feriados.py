@@ -197,7 +197,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
           df_aux[col_delta[e]] = (df_aux[conv_weeks[e]].astype(float).values/df_aux[col_interpoladas[e]].astype(float).values) - 1
       
       # Caso tanhamos forecast, os valores delta serão entre o forecast e o act:
-      df_aux[col_delta] = df_aux[conv_weeks].astype(float).values/df_aux[col_interpoladas].astype(float).values - 1
+      df_aux[col_delta] = df_aux[conv_weeks]/df_aux[col_interpoladas] - 1
       #-----------------------------------------------------------------------------------
 
 
