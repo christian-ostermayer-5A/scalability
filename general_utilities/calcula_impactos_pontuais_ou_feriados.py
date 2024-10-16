@@ -132,9 +132,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
   df_resultados['impacto medio'] = 0
   df_resultados = df_resultados[['cluster','concat_col','metric', 'p-value', 'impacto medio']]
   df_resultados = df_resultados.drop(df_resultados.index)
-  print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-  print(df.columns.values)
-  print(df_forecast.columns.values)
+
   # Caso já tenhamos valores de forecast, os valores de referência interpolados serão os de forecast:
   #--------------------------------------------------------------------------------------------------------
   if len(df_forecast)>0:
@@ -142,8 +140,6 @@ def compara_feriados(df, #dataframe utilizado para as contas
     df = df.merge(df_forecast[[coluna_semana,'concat_col']+col_interpoladas], on=[coluna_semana,'concat_col'], how='left')
     df[col_interpoladas] = df[col_interpoladas].fillna(method='ffill')                                             
 
-  print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-  print(df.columns.values)
 
 
   # Caso tenhamos uma comparação entre aberturas, vamos adicionar uma coluna de cluster
@@ -200,11 +196,6 @@ def compara_feriados(df, #dataframe utilizado para as contas
           df_aux[col_delta[e]] = (df_aux[conv_weeks[e]].astype(float).values/df_aux[col_interpoladas[e]].astype(float).values) - 1
       
       # Caso tanhamos forecast, os valores delta serão entre o forecast e o act:
-      print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-      print(df_aux.columns.values)
-      print(col_delta)
-      print(conv_weeks)
-      print(col_interpoladas)
       if len(conv_weeks) == 1:
         df_aux[col_delta[0]] = df_aux[conv_weeks[0]].astype(float).values/df_aux[col_interpoladas[0]].astype(float).values - 1
       else:
