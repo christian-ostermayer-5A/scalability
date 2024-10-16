@@ -132,7 +132,9 @@ def compara_feriados(df, #dataframe utilizado para as contas
   df_resultados['impacto medio'] = 0
   df_resultados = df_resultados[['cluster','concat_col','metric', 'p-value', 'impacto medio']]
   df_resultados = df_resultados.drop(df_resultados.index)
-
+  print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+  print(df.columns.values)
+  print(df_forecast.columns.values)
   # Caso já tenhamos valores de forecast, os valores de referência interpolados serão os de forecast:
   #--------------------------------------------------------------------------------------------------------
   if len(df_forecast)>0:
