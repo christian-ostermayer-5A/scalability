@@ -140,7 +140,8 @@ def compara_feriados(df, #dataframe utilizado para as contas
     df = df.merge(df_forecast[[coluna_semana,'concat_col']+col_interpoladas], on=[coluna_semana,'concat_col'], how='left')
     df[col_interpoladas] = df[col_interpoladas].fillna(method='ffill')                                             
 
-
+  print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+  print(df.columns.values)
 
 
   # Caso tenhamos uma comparação entre aberturas, vamos adicionar uma coluna de cluster
