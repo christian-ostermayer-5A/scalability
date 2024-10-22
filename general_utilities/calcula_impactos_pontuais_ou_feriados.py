@@ -137,6 +137,8 @@ def compara_feriados(df, #dataframe utilizado para as contas
   #--------------------------------------------------------------------------------------------------------
   if len(df_forecast)>0:
     df_forecast = df_forecast.rename(columns=dict(zip(conv_weeks,col_interpoladas)))
+    print(conv_weeks)
+    print(df_forecast.columns.values)
     df = df.merge(df_forecast[[coluna_semana,'concat_col']+col_interpoladas], on=[coluna_semana,'concat_col'], how='left')
     df[col_interpoladas] = df[col_interpoladas].fillna(method='ffill')                                             
 
