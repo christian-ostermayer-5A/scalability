@@ -321,7 +321,7 @@ def compara_impacto_aberturas(df_resultados,
       # Comparamos os impactos entre cada par de chaves:
       for par in pares_chaves:
 
-        list_pvalue_metric = []
+        col_metrics = df_resultados_significativos['metric'].unique()
 
         for metric in col_metrics:
 
