@@ -87,9 +87,10 @@ def compara_feriados(df, #dataframe utilizado para as contas
   
   #vol_weeks = ['0', '1', '2', '3', '4', '5'] #Aqui está incluído, pois é gerado exatamente assim na função de transformação de bases
   conv_weeks = col_metrics #['%__0', '%__1', '%__2', '%__3', '%__4', '%__5', '%__Volume Aberta'] #Aqui está incluído, pois é gerado exatamente assim na função de transformação de bases
-  
+  df_original = df.copy()
   
   #qtd_etapas = df[col_etapas].nunique() #Criação de lista com todos as etapas únicas do funil.
+  df[col_metrics] = df[col_metrics].astype(float)
   if aberturas[0] == '':
     df['concat_col'] = 'Total'
     if len(df_forecast) > 0:
@@ -110,7 +111,13 @@ def compara_feriados(df, #dataframe utilizado para as contas
   # Caso tenhamos um resultado anterior, vamos separar as aberturas em clusters iniciais de aberturas boas e ruins:
   if len(df_resultado_por_abertura) > 0:
     aberturas_relevantes = df_resultado_por_abertura.loc[df_resultado_por_abertura['p-value'] < 0.05]
-    if len(aberturas_relevantes) > 0:
+    # vamos ser mais tolerantes com a comparacao entre aberturas
+    if len(df_comparacao_aberturas) > 0:
+      comparacao_aberturas_relevantes = df_comparacao_aberturas.loc[df_comparacao_aberturas['avg p-value'] < 0.2]
+    else:
+      comparacao_aberturas_relevantes = pd.DataFrame()
+    # Caso tenhamos um resultado anterior mas nenhuma comparação, vamos separar os clusters entre relevantes e irrelevantes:
+    if len(aberturas_relevantes) > 0 and len(df_comparacao_aberturas) == 0:
       aberturas_relevantes['concat_col'] = aberturas_relevantes[aberturas].apply('_&_'.join, axis=1)
       aberturas_relevantes = aberturas_relevantes['concat_col'].unique()
       df['cluster'] = 'Irrelevante'
@@ -132,38 +139,56 @@ def compara_feriados(df, #dataframe utilizado para as contas
   df_resultados['impacto medio'] = 0
   df_resultados = df_resultados[['cluster','concat_col','metric', 'p-value', 'impacto medio']]
   df_resultados = df_resultados.drop(df_resultados.index)
-
-  # Caso já tenhamos valores de forecast, os valores de referência interpolados serão os de forecast:
-  #--------------------------------------------------------------------------------------------------------
-  if len(df_forecast)>0:
-    df_forecast = df_forecast.rename(columns=dict(zip(conv_weeks,col_interpoladas)))
-    df = df.merge(df_forecast[[coluna_semana,'concat_col']+col_interpoladas], on=[coluna_semana,'concat_col'], how='left')
-    df[col_interpoladas] = df[col_interpoladas].fillna(method='ffill')                                             
-
+                                      
 
 
   # Caso tenhamos uma comparação entre aberturas, vamos adicionar uma coluna de cluster
   #-----------------------------------------------------------------------------------------------------
   if len(df_comparacao_aberturas) > 0:
+
+    df_melted = df.melt(id_vars=['cluster',coluna_semana,'concat_col',feriado]+aberturas, value_vars=conv_weeks, var_name='metric', value_name='volume')
+    #df_melted = df.copy()
+
+    for metric in df_melted['metric'].unique():
     
-    # selecionamos apenas as chaves relevantes
-    df_aberturas_relevantes = df_comparacao_aberturas.loc[df_comparacao_aberturas['avg p-value'] < 0.05]
+      # selecionamos apenas as chaves relevantes
+      df_aberturas_relevantes = df_comparacao_aberturas.loc[(df_comparacao_aberturas['avg p-value'] < 0.2) & (df_comparacao_aberturas['metric'] == metric)]
+      #df_aberturas_relevantes = df_comparacao_aberturas.loc[(df_comparacao_aberturas['avg p-value'] < 0.2)]
+      # Definimos aqui quais métricas são relevantes entre as aberturas para usar posteriormente
+      metricas_relevantes = df_comparacao_aberturas.loc[(df_comparacao_aberturas['avg p-value'] < 0.2), 'metric'].unique()
 
-    if len(df_aberturas_relevantes) > 0:
-      lista_chaves_relevantes = df_aberturas_relevantes['chave'].unique()
+      if len(df_aberturas_relevantes) > 0:
+        lista_aberturas_relevantes = df_aberturas_relevantes['abertura'].unique()
+        #print("----------------------------------------------------")
+        #display(df_aberturas_relevantes)
+      else:
+        lista_aberturas_relevantes = []
+      lista_aberturas_cluster = []
+      for abertura in aberturas:
+        if abertura in lista_aberturas_relevantes:
+          df_melted.loc[df_melted['metric'] == metric, 'cluster'] = df_melted.loc[df_melted['metric'] == metric, 'cluster']+'___'+df_melted.loc[df_melted['metric'] == metric, abertura].astype(str)
+          #df_melted['cluster'] = df_melted['cluster']+'___'+df_melted[abertura].astype(str)
+        else:
+          df_melted.loc[df_melted['metric'] == metric, 'cluster'] = df_melted.loc[df_melted['metric'] == metric, 'cluster']+'___Total'
+          #df_melted['cluster'] = df_melted['cluster']+'___Total'
+      
+      df_melted.loc[df_melted['metric'] == metric, 'cluster'] = df_melted.loc[df_melted['metric'] == metric, 'cluster']+'___'+metric
 
-      # para cada chave relevante, vamos identificá-la na coluna de abertura única e formar clusters na base principal
-      for chave in lista_chaves_relevantes:
+    # Reformatar a base df:
+    df = df_melted.pivot_table(values='volume', index=['cluster',coluna_semana,'concat_col',feriado], columns='metric').reset_index()
+    #df = df_melted.copy()
 
-        if len(df[df['concat_col'].str.contains(chave+"_&", case=False, na=False)]) > 0:
-          df.loc[df['concat_col'].str.contains(chave+"_&", case=False, na=False),'cluster'] = df.loc[df['concat_col'].str.contains(chave+"_&", case=False, na=False),'cluster']+"___"+chave
+  # Caso já tenhamos valores de forecast, os valores de referência interpolados serão os de forecast:
+  #--------------------------------------------------------------------------------------------------------
+  #display(df)
+  if len(df_forecast)>0:
+    df_forecast = df_forecast.rename(columns=dict(zip(conv_weeks,col_interpoladas)))
+    df = df.merge(df_forecast[[coluna_semana,'concat_col']+col_interpoladas], on=[coluna_semana,'concat_col'], how='left')
+    df[col_interpoladas] = df[col_interpoladas].fillna(method='ffill')       
 
-        elif len(df[df['concat_col'].str.contains("&_"+chave, case=False, na=False)]) > 0:
-          df.loc[df['concat_col'].str.contains("&_"+chave, case=False, na=False),'cluster'] = df.loc[df['concat_col'].str.contains("&_"+chave, case=False, na=False),'cluster']+"___"+chave
 
-
-  
   # Vamos agrupar a análise dos impactos por cluster de aberturas:
+  #----------------------------------------------------------------------------------------------------------
 
   lista_resultados = []
   for cluster in df['cluster'].unique():
@@ -196,10 +221,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
           df_aux[col_delta[e]] = (df_aux[conv_weeks[e]].astype(float).values/df_aux[col_interpoladas[e]].astype(float).values) - 1
       
       # Caso tanhamos forecast, os valores delta serão entre o forecast e o act:
-      if len(conv_weeks) == 1:
-        df_aux[col_delta[0]] = df_aux[conv_weeks[0]].astype(float).values/df_aux[col_interpoladas[0]].astype(float).values - 1
-      else:
-        df_aux[col_delta] = df_aux[conv_weeks].astype(float).values/df_aux[col_interpoladas].astype(float).values - 1
+      df_aux[col_delta] = df_aux[conv_weeks].astype(float).values/df_aux[col_interpoladas].astype(float).values - 1
       #-----------------------------------------------------------------------------------
 
 
@@ -246,9 +268,36 @@ def compara_feriados(df, #dataframe utilizado para as contas
 
 
       # Para cada cluster, calculamos os p-valores e impactos médios:
-      for i in range(len(conv_weeks)): #Nesse for, fazemos o teste t e o p-valor entre os deltas dos valores originais vs os interpolados.
+      # Como os clusters de combinaçõies de aberturas relevantes são específicos de cada métrica, vamos separar somente
+      # as métricas pertencentes à relevância do cluster:
+      list_aberturas_cluster = cluster.split('___')
+      list_aberturas_relevantes = [aberturas[x] for x in range(len(aberturas)) if list_aberturas_cluster[x+1] != 'Total']
 
-        t_stat, p_val = ttest_ind(df_normal[col_delta[i]], df_feriado[col_delta[i]])
+      '''
+      if len(list_aberturas_relevantes) > 0:
+        common_set = []
+        for abertura_relevante in list_aberturas_relevantes:
+          metric_aberturas_relevantes = set(df_comparacao_aberturas.loc[(df_comparacao_aberturas['avg p-value'] < 0.2) & (df_comparacao_aberturas['abertura'] == abertura_relevante), 'metric'].unique())
+          print(abertura_relevante)
+          display(df_comparacao_aberturas.loc[(df_comparacao_aberturas['avg p-value'] < 0.2) & (df_comparacao_aberturas['abertura'] == abertura_relevante)])
+
+          if len(common_set) == 0:
+            common_set = metric_aberturas_relevantes
+          else:
+            common_set = common_set.intersection(metric_aberturas_relevantes)
+        metric_aberturas_relevantes = list(common_set)
+      else:
+        metric_aberturas_relevantes = list(set(conv_weeks) - set(metricas_relevantes))
+      '''
+      if len(list_aberturas_relevantes) > 0:
+        metric_aberturas_relevantes = [list_aberturas_cluster[-1]]
+      else:
+        metric_aberturas_relevantes = list(set(conv_weeks) - set(metricas_relevantes))
+
+
+      for metric_r in metric_aberturas_relevantes: #Nesse for, fazemos o teste t e o p-valor entre os deltas dos valores originais vs os interpolados.
+
+        t_stat, p_val = ttest_ind(df_normal[metric_r+"_delta"], df_feriado[metric_r+"_delta"])
         '''
         print("2-------------------------------------------------")
         print(cluster)
@@ -258,7 +307,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
         print(len(df_normal[col_delta[i]].values),len(df_feriado[col_delta[i]].values))
         '''
 
-        lista_resultado = [[cluster, cluster, conv_weeks[i], p_val, round(np.average(df_feriado[col_delta[i]].values),5)]]
+        lista_resultado = [[cluster, cluster, metric_r, p_val, round(np.average(df_feriado[metric_r+"_delta"].values),5)]]
         df_novo = pd.DataFrame(lista_resultado, columns=df_resultados.columns)
         df_resultados = pd.concat([df_resultados, df_novo], ignore_index=True)
       
@@ -272,7 +321,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
     df_resultados[aberturas] = 'Total'
 
     for abertura in aberturas:
-      chaves = df[abertura].unique()
+      chaves = df_original[abertura].unique()
 
       for chave in chaves:
 
@@ -293,9 +342,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
       df_resultados = df_resultados.drop('concat_col', axis=1) #Exclui a coluna 'concat_col'
       df_resultados = df_resultados[['cluster']+['metric', 'p-value', 'impacto medio']] #Reordena as colunas
 
-
   return df_resultados
-
 
 
 # Comparação entre as aberturas
@@ -304,9 +351,13 @@ def compara_feriados(df, #dataframe utilizado para as contas
 def compara_impacto_aberturas(df_resultados,
                               aberturas):
 
-  # Filtrar somente aberturas com impacto significativo:
-  df_resultados_significativos = df_resultados.loc[df_resultados['p-value'] < 0.05]
+  # Comparação entre as aberturas
+  #____________________________________________________________________________________________________________________________________
 
+  # Filtrar somente aberturas com impacto significativo:
+  #df_resultados_significativos = df_resultados.loc[df_resultados['p-value'] < 0.05]
+  df_resultados_significativos = df_resultados.copy()
+  #df_resultados_significativos = df_resultados.loc[df_resultados['p-value'].notnull()]
   # Vamos salvar as comparações entre aberturas numa base:
   #df_comparacao_aberturas = pd.DataFrame(columns=['abertura','chave']+col_metrics)
   list_results = [[]]
@@ -347,7 +398,39 @@ def compara_impacto_aberturas(df_resultados,
   # transformamos as listas de listas de resultados em um único dataframe:
   df_comparacao_aberturas = pd.DataFrame(list_results[1:],columns=['abertura','chave','metric','avg p-value'])
 
+  '''
+          # Vamos fazer comparações fixando outra abertura para tentar diminuir a variação de p-value por conta de estar variando outras chaves:
+          outras_aberturas = list(set(aberturas)-set([abertura]))
+          for outra_abertura in outras_aberturas:
+            outra_unique_keys = df_resultados_significativos[outra_abertura].unique()
+            for outra_key in outra_unique_keys:
+
+              impacts_par1 = df_resultados_significativos.loc[(df_resultados_significativos[abertura] == par[0]) & (df_resultados_significativos['metric'] == metric) & (df_resultados_significativos[outra_abertura] == outra_key)]['impacto medio'].values
+              impacts_par2 = df_resultados_significativos.loc[(df_resultados_significativos[abertura] == par[-1]) & (df_resultados_significativos['metric'] == metric) & (df_resultados_significativos[outra_abertura] == outra_key)]['impacto medio'].values
+
+              t_stat, p_val = ttest_ind(impacts_par1,impacts_par2)
+
+              list_aux = [abertura, par[0], outra_abertura, outra_key, metric, p_val]
+              list_results = list_results+[list_aux]
+
+              list_aux = [abertura, par[-1], outra_abertura, outra_key, metric, p_val]
+              list_results = list_results+[list_aux]            
+
+              print("_____________________________________________________________________")
+              print(abertura, par[0], outra_abertura, outra_key, metric, p_val)
+              print("-------------------------------------------")
+              print(impacts_par1)
+              print("-------------------------------------------")
+              print(impacts_par2)
+
+  # transformamos as listas de listas de resultados em um único dataframe:
+  df_comparacao_aberturas = pd.DataFrame(list_results[1:],columns=['abertura','chave','fixando_abertura','fixando_chave','metric','avg p-value'])
+  '''
+
   # Vamos agrupar o resultado pela média dos p-valores:
   df_comparacao_aberturas = df_comparacao_aberturas.groupby(['abertura','chave','metric']).agg({'avg p-value': 'mean'}).reset_index()
+
+  # Vamos agrupar o resultado na abertura pelo valor mímino do p-valor médio dentre as chaves:
+  df_comparacao_aberturas = df_comparacao_aberturas.groupby(['abertura','metric']).agg({'avg p-value': 'min'}).reset_index()
 
   return df_comparacao_aberturas
