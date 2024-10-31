@@ -333,7 +333,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
 
   # Caso contrário, formatamos o resultado final por abertura:
   else:
-    if aberturas[0] != '':
+    if len(aberturas) != 0:
       df_resultados[aberturas] = df_resultados['concat_col'].str.split('_&_', expand=True) #Separação da coluna de aberturas combinas em colunas auxiliares. Basicamente retorna as colunas iniciais de abertura.
       df_resultados = df_resultados.drop('concat_col', axis=1) #Exclui a coluna 'concat_col'
       df_resultados = df_resultados[['cluster']+aberturas + ['metric', 'p-value', 'impacto medio']] #Reordena as colunas
