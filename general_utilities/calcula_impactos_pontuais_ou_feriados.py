@@ -362,7 +362,7 @@ def compara_impacto_aberturas(df_resultados,
   #df_comparacao_aberturas = pd.DataFrame(columns=['abertura','chave']+col_metrics)
   list_results = [[]]
 
-  if len(df_resultados_significativos) > 0 and len(aberturas) != '0:
+  if len(df_resultados_significativos) > 0 and len(aberturas) != 0:
 
     # Para cada abertura, vamos comparar os impactos em cada métrica a cada par de chaves:
     for abertura in aberturas:
