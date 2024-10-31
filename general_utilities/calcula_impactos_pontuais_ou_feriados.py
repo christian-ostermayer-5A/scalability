@@ -117,7 +117,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
     else:
       comparacao_aberturas_relevantes = pd.DataFrame()
     # Caso tenhamos um resultado anterior mas nenhuma comparação, vamos separar os clusters entre relevantes e irrelevantes:
-    if len(aberturas_relevantes) > 0 and len(df_comparacao_aberturas) == 0:
+    if len(aberturas_relevantes) > 0 and len(df_comparacao_aberturas) == 0 and len(aberturas) > 0:
       aberturas_relevantes['concat_col'] = aberturas_relevantes[aberturas].apply('_&_'.join, axis=1)
       aberturas_relevantes = aberturas_relevantes['concat_col'].unique()
       df['cluster'] = 'Irrelevante'
