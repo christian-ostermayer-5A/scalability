@@ -91,7 +91,7 @@ def compara_feriados(df, #dataframe utilizado para as contas
   
   #qtd_etapas = df[col_etapas].nunique() #Criação de lista com todos as etapas únicas do funil.
   df[col_metrics] = df[col_metrics].astype(float)
-  if aberturas[0] == '':
+  if len(aberturas) == 0:
     df['concat_col'] = 'Total'
     if len(df_forecast) > 0:
       df_forecast['concat_col'] = 'Total'
@@ -362,7 +362,7 @@ def compara_impacto_aberturas(df_resultados,
   #df_comparacao_aberturas = pd.DataFrame(columns=['abertura','chave']+col_metrics)
   list_results = [[]]
 
-  if len(df_resultados_significativos) > 0 and aberturas != '':
+  if len(df_resultados_significativos) > 0 and len(aberturas) != '0:
 
     # Para cada abertura, vamos comparar os impactos em cada métrica a cada par de chaves:
     for abertura in aberturas:
