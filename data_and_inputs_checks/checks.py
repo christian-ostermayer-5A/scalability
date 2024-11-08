@@ -1826,7 +1826,7 @@ def verifica_datas_tofs(nome_do_arquivo,
       lista_aux.append(elemento+pd.to_timedelta(i,unit="D"))
       
   if not set(lista_datas_tof_mensal).issubset(lista_aux):
-    mensagem = mensagem + f'\n\n Atenção! As datas presentes no \033[1;33mToF Mensal\033[0;0;0m do arquivo \033[1;34m{nome_do_arquivo[1]}\033[0;0;0m não batem com as do \033[1;33mToF Semanal\033[0;0;0m do arquivo \033[1;34m{nome_do_arquivo[0]}\033[0;0;0m'
+    mensagem = mensagem + f'\n\n Atenção! As datas presentes no \033[1;33mToF Mensal\033[0;0;0m do arquivo \033[1;34m{nome_do_arquivo[1]}\033[0;0;0m não batem com as do \033[1;33mToF Semanal\033[0;0;0m do arquivo \033[1;34m{nome_do_arquivo[0]}\033[0;0;0m\n\nOs meses da base semanal devem estar contidos nos dias da base semanal\n\nDias da base semanal:\n{lista_aux}\nMeses da base mensal:\n{lista_datas_tof_mensal}'
     contador_erros += 1
   #print(set(lista_datas_tof_mensal).issubset(lista_aux))
 
