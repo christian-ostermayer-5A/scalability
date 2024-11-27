@@ -159,10 +159,6 @@ def multilinear(df_completo, # DF filtrado somente a abertura e Endog, ordenado 
 
 
       # Adicionamos os endogs transformados na base geral
-      print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-      print(col_exogs)
-      print(colunas_endog_transformadas)
-      print(list(df_transformado.columns.values))
       df_transformado = transforma_exogs_2(df = df_transformado,
                                         exogenous_l_d = colunas_endog_transformadas_faltantes, # Lista com o nome das variaveis exogenas (com os suffixos "l" e "d")
                                         col_data = col_data) # String com o nome da coluna de datas
