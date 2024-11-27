@@ -34,8 +34,6 @@ def transforma_exogs_2(df, # Dataframe filtrado (somente uma etapa e uma abertur
 
     # Calcular a variável transformada:
     for i in range(len(exogenous_l_d)):
-      print("*************")
-      print(exogenous_l_d)
       split = exogenous_l_d[i].split("___")
       if split[1] == "d":
         exogenous,lag,dif = split[0],0,1
