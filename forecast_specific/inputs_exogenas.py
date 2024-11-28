@@ -50,6 +50,8 @@ def inputs_exogenas(df_inputs_exogenas,abertura,etapa,endogenous,exog_list):
       lista_exogenas[l] = lista_exogenas[l]
     elif lista_lag[l] == "d":
       lista_exogenas[l] = lista_exogenas[l]+"___d"
+    elif lista_lag[l] == "log":
+      lista_exogenas[l] = lista_exogenas[l]+"___log"
     else:
       lista_exogenas[l] = lista_exogenas[l]+"___l___"+lista_lag[l]
   df_i_exo['exógena'] = lista_exogenas
