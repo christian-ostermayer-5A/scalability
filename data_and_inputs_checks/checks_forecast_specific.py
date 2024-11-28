@@ -33,7 +33,7 @@ def check_inputs_exogenas(df_inputs,
                               ['Volume','Cohort Aberta']+shares_permitidos,
                               ['Incluir','Check'],
                               ['ordem_semana','Tempo Numérico','Feriado','Year','Volume']+meses+col_valores_exogenas,
-                              ['d']+lags_permitidos,
+                              ['d']+lags_permitidos+['log'],
                               ['-1','0','1']]
 
   for i in range(len(colunas)):
