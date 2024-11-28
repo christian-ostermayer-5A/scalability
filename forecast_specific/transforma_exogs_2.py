@@ -41,9 +41,6 @@ def transforma_exogs_2(df, # Dataframe filtrado (somente uma etapa e uma abertur
         c_df[exogenous_l_d[i]] = np.append(np.array([0.]),c_df[exogenous].astype(float).values[1:]-c_df[exogenous].astype(float).values[:-1],0)
 
       elif split[1] == "l":
-        print("-------------------------------")
-        print(exogenous_l_d[i])
-        print(split)
         exogenous,lag,dif = split[0],int(split[2]),0
 
         c_df[exogenous_l_d[i]] = c_df[exogenous].shift(periods=lag)
