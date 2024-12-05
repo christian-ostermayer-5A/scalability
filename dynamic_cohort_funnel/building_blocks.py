@@ -9,6 +9,110 @@ from redutor_de_base import *
 from ajusta_teto_cohort import *
 from colored import colored
 from rounding_tool import *
+import concurrent.futures
+
+
+def run_planning_funnel_cohort_bb(projeto,
+                                  tof,
+                                  inputs_df,
+                                  baseline_df,
+                                  baseline_cohort,
+                                  dict_grupos,
+                                  nome_coluna_week_origin,
+                                  coluna_de_semanas,
+                                  ToF_semanal_tof,
+                                  base_df_on_top,
+                                  base_df_impacto_feriados,
+                                  aplicacao_ajuste,
+                                  chaves_cohort,
+                                  chaves_coincident,
+                                  etapas_cohort,
+                                  etapas_coincident,
+                                  etapas_cohort_x,
+                                  etapas_cohort_y,
+                                  etapas_coincident_x,
+                                  etapas_coincident_y):
+
+  print_string = 'Calculando Funil com ToF: '+colored(tof,'y')+' e projeto: '+colored(projeto,'b')
+  empty_string = " "*(50-len(print_string))
+  '''
+  print()
+  print(print_string,empty_string,str(qtd_p+1),"/",str(len(projetos)),end='\r')
+  qtd_p+=1
+  '''
+
+  # Seleciona o projeto e o ToF correspondente
+  inputs_projeto_df = inputs_df.loc[(inputs_df['building block cohort'] == projeto) & (inputs_df['building block tof'] == tof)]
+
+  # Se o projeto não for aplicado no tof, pulamos o projeto até chegar no tof onde é aplicado:
+  if len(inputs_projeto_df) > 0:
+
+
+    # Adicionando o baseline:
+    baseline_df_tof = baseline_df.loc[baseline_df['building block tof'] == tof]
+    inputs_projeto_df = pd.concat([inputs_projeto_df,baseline_df_tof])
+
+    # Após selecionar os BB's, remover as colunas dos inputs:
+    inputs_projeto_df= inputs_projeto_df.drop(columns=['building block tof'])
+    inputs_projeto_df = inputs_projeto_df.drop(columns=['building block cohort'])
+
+    # Geramos o baseline de conversões
+    base_cohort,inputs = gerador_baseline_conversoes_v2(baseline_cohort_df = baseline_cohort,
+                                                        inputs_df = inputs_projeto_df,
+                                                        dict_grupos = dict_grupos,
+                                                        nome_coluna_week_origin = nome_coluna_week_origin,
+                                                        coluna_de_semanas = coluna_de_semanas)
+
+    base_cohort = ajusta_teto_cohort(df_cohort = base_cohort,
+                                    nome_coluna_week_origin = nome_coluna_week_origin)
+
+    # Rodamos o funil:
+    output_cohort_projeto,output_coincident_projeto,topo_de_funil,topos_de_funil = Funil_Dinamico_DataFrame(df_ToF = ToF_semanal_tof,             
+                                                                                            df_cohort = base_cohort,            
+                                                                                            df_ratio = base_df_on_top,             
+                                                                                            df_impacto_feriados = base_df_impacto_feriados,    
+                                                                                            nome_coluna_week_origin = nome_coluna_week_origin,
+                                                                                            aplicacao_ajuste = aplicacao_ajuste,
+                                                                                            coluna_de_semanas = coluna_de_semanas)
+  
+  
+    # Subtrair os valores de baseline para ficar somente com oq o projeto agrega:
+    #-----------------------------------------------------------------------------------------------
+
+    # Unimos as bases finais dos projetos+baseline com a base final de somente o baseline:
+    output_cohort_projeto[coluna_de_semanas] = pd.to_datetime(output_cohort_projeto[coluna_de_semanas], infer_datetime_format=True)
+    output_coincident_projeto[coluna_de_semanas] = pd.to_datetime(output_coincident_projeto[coluna_de_semanas], infer_datetime_format=True)
+    
+    merged_cohort = pd.merge(output_cohort_projeto,output_cohort_baseline,how='left',on=chaves_cohort)
+    merged_coincident = pd.merge(output_coincident_projeto,output_coincident_baseline,how='left',on=chaves_coincident)
+
+    # Adicionamos as colunas que contém a diferença dos valores entre projeto e baseline:
+    merged_cohort[etapas_cohort] = merged_cohort[etapas_cohort_x].astype(float).values - merged_cohort[etapas_cohort_y].astype(float).values
+    merged_coincident[etapas_coincident] = merged_coincident[etapas_coincident_x].astype(float).values - merged_coincident[etapas_coincident_y].astype(float).values
+
+    # Selecionamos apenas as colunas que importam:
+    output_cohort_projeto = merged_cohort[chaves_cohort+etapas_cohort]
+    output_coincident_projeto = merged_coincident[chaves_coincident+etapas_coincident]
+
+    output_cohort_projeto['building block cohort'] = projeto
+    output_coincident_projeto['building block cohort'] = projeto
+
+  
+  else:
+    output_cohort_projeto = pd.DataFrame()
+    output_coincident_projeto = pd.DataFrame()
+    base_diaria_projeto = pd.DataFrame()
+  
+  return output_cohort_projeto,output_coincident_projeto,base_diaria_projeto
+
+
+
+
+'''
+_____________________________________________________________________________________________________________________________
+'''
+
+
 
 
 
@@ -168,78 +272,49 @@ def building_blocks(inputs_df,
     qtd_p = 0
     for projeto in projetos:
 
-      print_string = 'Calculando Funil com ToF: '+colored(tof,'y')+' e projeto: '+colored(projeto,'b')
-      empty_string = " "*(50-len(print_string))
-      print()
-      print(print_string,empty_string,str(qtd_p+1),"/",str(len(projetos)),end='\r')
-      qtd_p+=1
+    output_cohort_results = []
+    output_coincident_results = []
 
-      # Seleciona o projeto e o ToF correspondente
-      inputs_projeto_df = inputs_df.loc[(inputs_df['building block cohort'] == projeto) & (inputs_df['building block tof'] == tof)]
-
-      # Se o projeto não for aplicado no tof, pulamos o projeto até chegar no tof onde é aplicado:
-      if len(inputs_projeto_df) > 0:
-
-
-        # Adicionando o baseline:
-        baseline_df_tof = baseline_df.loc[baseline_df['building block tof'] == tof]
-        inputs_projeto_df = pd.concat([inputs_projeto_df,baseline_df_tof])
-
-        # Após selecionar os BB's, remover as colunas dos inputs:
-        inputs_projeto_df= inputs_projeto_df.drop(columns=['building block tof'])
-        inputs_projeto_df = inputs_projeto_df.drop(columns=['building block cohort'])
-
-        # Geramos o baseline de conversões
-        base_cohort,inputs = gerador_baseline_conversoes_v2(baseline_cohort_df = baseline_cohort,
-                                                            inputs_df = inputs_projeto_df,
-                                                            dict_grupos = dict_grupos,
-                                                            nome_coluna_week_origin = nome_coluna_week_origin,
-                                                            coluna_de_semanas = coluna_de_semanas)
-
-        base_cohort = ajusta_teto_cohort(df_cohort = base_cohort,
-                                        nome_coluna_week_origin = nome_coluna_week_origin)
-
-        # Rodamos o funil:
-        output_cohort_projeto,output_coincident_projeto,topo_de_funil,topos_de_funil = Funil_Dinamico_DataFrame(df_ToF = ToF_semanal_tof,             
-                                                                                                df_cohort = base_cohort,            
-                                                                                                df_ratio = base_df_on_top,             
-                                                                                                df_impacto_feriados = base_df_impacto_feriados,    
-                                                                                                nome_coluna_week_origin = nome_coluna_week_origin,
-                                                                                                aplicacao_ajuste = aplicacao_ajuste,
-                                                                                                coluna_de_semanas = coluna_de_semanas)
-      
-      
-        # Subtrair os valores de baseline para ficar somente com oq o projeto agrega:
-        #-----------------------------------------------------------------------------------------------
-
-        # Unimos as bases finais dos projetos+baseline com a base final de somente o baseline:
-        output_cohort_projeto[coluna_de_semanas] = pd.to_datetime(output_cohort_projeto[coluna_de_semanas], infer_datetime_format=True)
-        output_coincident_projeto[coluna_de_semanas] = pd.to_datetime(output_coincident_projeto[coluna_de_semanas], infer_datetime_format=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # Submit tasks to the executor
+        future_to_projeto = {executor.submit(run_planning_funnel_cohort_bb, projeto,
+                                                                          tof,
+                                                                          inputs_df,
+                                                                          baseline_df,
+                                                                          baseline_cohort,
+                                                                          dict_grupos,
+                                                                          nome_coluna_week_origin,
+                                                                          coluna_de_semanas,
+                                                                          ToF_semanal_tof,
+                                                                          base_df_on_top,
+                                                                          base_df_impacto_feriados,
+                                                                          aplicacao_ajuste,
+                                                                          chaves_cohort,
+                                                                          chaves_coincident,
+                                                                          etapas_cohort,
+                                                                          etapas_coincident,
+                                                                          etapas_cohort_x,
+                                                                          etapas_cohort_y,
+                                                                          etapas_coincident_x,
+                                                                          etapas_coincident_y): projeto for projeto in projetos}
         
-        merged_cohort = pd.merge(output_cohort_projeto,output_cohort_baseline,how='left',on=chaves_cohort)
-        merged_coincident = pd.merge(output_coincident_projeto,output_coincident_baseline,how='left',on=chaves_coincident)
+        # Process results as they complete
+        for future in concurrent.futures.as_completed(future_to_projeto):
+            projeto = future_to_projeto[future]
+            try:
+                output_cohort_result, output_coincident_result, output_daily_result = future.result()
 
-        # Adicionamos as colunas que contém a diferença dos valores entre projeto e baseline:
-        merged_cohort[etapas_cohort] = merged_cohort[etapas_cohort_x].astype(float).values - merged_cohort[etapas_cohort_y].astype(float).values
-        merged_coincident[etapas_coincident] = merged_coincident[etapas_coincident_x].astype(float).values - merged_coincident[etapas_coincident_y].astype(float).values
+                output_cohort_results.append(output_cohort_result)
+                output_coincident_results.append(output_coincident_result)
+            except Exception as exc:
+                print(f'{data} generated an exception: {exc}')
 
-        # Selecionamos apenas as colunas que importam:
-        output_cohort_projeto = merged_cohort[chaves_cohort+etapas_cohort]
-        output_coincident_projeto = merged_coincident[chaves_coincident+etapas_coincident]
 
-        output_cohort_projeto['building block cohort'] = projeto
-        output_coincident_projeto['building block cohort'] = projeto
-
-      
-      else:
-        output_cohort_projeto = pd.DataFrame()
-        output_coincident_projeto = pd.DataFrame()
-        base_diaria_projeto = pd.DataFrame()
 
 
       # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
-      output_cohort_final = pd.concat([output_cohort_final,output_cohort_projeto])
-      output_coincident_final = pd.concat([output_coincident_final,output_coincident_projeto])
+      output_cohort_final = pd.concat(output_cohort_results)
+      output_coincident_final = pd.concat(output_coincident_results)
 
       #---------------------------------------------------------------------------------------------
 
