@@ -10,6 +10,7 @@ from ajusta_teto_cohort import *
 from colored import colored
 from rounding_tool import *
 import concurrent.futures
+import os
 
 
 def run_planning_funnel_cohort_bb(projeto,
@@ -269,13 +270,12 @@ def building_blocks(inputs_df,
 
     # Calculamos cada projeto individualmente:
     #_______________________________________________________________________________________________
-    qtd_p = 0
-    for projeto in projetos:
+    num_cores = os.cpu_count()
 
     output_cohort_results = []
     output_coincident_results = []
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_cores) as executor:
         # Submit tasks to the executor
         future_to_projeto = {executor.submit(run_planning_funnel_cohort_bb, projeto,
                                                                           tof,
