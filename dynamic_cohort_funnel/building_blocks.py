@@ -276,38 +276,39 @@ def building_blocks(inputs_df,
     output_coincident_results = []
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_cores) as executor:
-        # Submit tasks to the executor
-        future_to_projeto = {executor.submit(run_planning_funnel_cohort_bb, projeto,
-                                                                          tof,
-                                                                          inputs_df,
-                                                                          baseline_df,
-                                                                          baseline_cohort,
-                                                                          dict_grupos,
-                                                                          nome_coluna_week_origin,
-                                                                          coluna_de_semanas,
-                                                                          ToF_semanal_tof,
-                                                                          base_df_on_top,
-                                                                          base_df_impacto_feriados,
-                                                                          aplicacao_ajuste,
-                                                                          chaves_cohort,
-                                                                          chaves_coincident,
-                                                                          etapas_cohort,
-                                                                          etapas_coincident,
-                                                                          etapas_cohort_x,
-                                                                          etapas_cohort_y,
-                                                                          etapas_coincident_x,
-                                                                          etapas_coincident_y): projeto for projeto in projetos}
+      
+      # Submit tasks to the executor
+      future_to_projeto = {executor.submit(run_planning_funnel_cohort_bb, projeto,
+                                                                        tof,
+                                                                        inputs_df,
+                                                                        baseline_df,
+                                                                        baseline_cohort,
+                                                                        dict_grupos,
+                                                                        nome_coluna_week_origin,
+                                                                        coluna_de_semanas,
+                                                                        ToF_semanal_tof,
+                                                                        base_df_on_top,
+                                                                        base_df_impacto_feriados,
+                                                                        aplicacao_ajuste,
+                                                                        chaves_cohort,
+                                                                        chaves_coincident,
+                                                                        etapas_cohort,
+                                                                        etapas_coincident,
+                                                                        etapas_cohort_x,
+                                                                        etapas_cohort_y,
+                                                                        etapas_coincident_x,
+                                                                        etapas_coincident_y): projeto for projeto in projetos}
         
-        # Process results as they complete
-        for future in concurrent.futures.as_completed(future_to_projeto):
-            projeto = future_to_projeto[future]
-            try:
-                output_cohort_result, output_coincident_result, output_daily_result = future.result()
+      # Process results as they complete
+      for future in concurrent.futures.as_completed(future_to_projeto):
+          projeto = future_to_projeto[future]
+          try:
+              output_cohort_result, output_coincident_result, output_daily_result = future.result()
 
-                output_cohort_results.append(output_cohort_result)
-                output_coincident_results.append(output_coincident_result)
-            except Exception as exc:
-                print(f'{data} generated an exception: {exc}')
+              output_cohort_results.append(output_cohort_result)
+              output_coincident_results.append(output_coincident_result)
+          except Exception as exc:
+              print(f'{data} generated an exception: {exc}')
 
 
 
