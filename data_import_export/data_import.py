@@ -256,7 +256,7 @@ def abertura_das_bases(lista_de_nomes_das_bases,  # lista de strings com os nome
       for base in lista_bases_abertas:
         print(colored(base,'b'))
     else:
-      print(colored(nome_da_base+' aberto',"green"),end="")
+      print(colored(nomes_teoricos_das_bases[0]+' aberto',"green"),end="")
   else:
     flag_abriu = False
   
