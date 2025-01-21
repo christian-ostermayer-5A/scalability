@@ -270,8 +270,10 @@ def building_blocks(inputs_df,
 
     # Calculamos cada projeto individualmente:
     #_______________________________________________________________________________________________
-    num_cores = os.cpu_count()
-
+    #num_cores = os.cpu_count()
+    # o número de workers do cluster P&P Scalability é 4:
+    num_cores = 4
+    
     output_cohort_results = []
     output_coincident_results = []
     
