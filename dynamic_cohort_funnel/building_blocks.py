@@ -394,7 +394,7 @@ def building_blocks(inputs_df,
     output_cohort_results = []
     output_coincident_results = []
     
-    await main()
+    asyncio.run(main())
 
     # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
     output_cohort_final = pd.concat(output_cohort_results)
