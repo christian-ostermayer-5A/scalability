@@ -104,9 +104,8 @@ def run_planning_funnel_cohort_bb(projeto,
   else:
     output_cohort_projeto = pd.DataFrame()
     output_coincident_projeto = pd.DataFrame()
-    base_diaria_projeto = pd.DataFrame()
   
-  return output_cohort_projeto,output_coincident_projeto,base_diaria_projeto
+  return output_cohort_projeto,output_coincident_projeto
 
 
 
@@ -214,8 +213,8 @@ async def run_tasks_asynchronously(params,
                                         etapas_coincident_y) for param in params]
                                     
     results = await asyncio.gather(*tasks)
-    output_cohort_results,output_coincident_results,output_diario_results = zip(*results)
-    return output_cohort_results,output_coincident_results,output_diario_results
+    output_cohort_results,output_coincident_results = zip(*results)
+    return output_cohort_results,output_coincident_results
 
 '''
 _____________________________________________________________________________________________________________________________
@@ -243,7 +242,7 @@ async def main(params,
                 etapas_cohort_y,
                 etapas_coincident_x,
                 etapas_coincident_y):
-  output_cohort_results,output_coincident_results,output_diario_results = await run_tasks_asynchronously(params, 
+  output_cohort_results,output_coincident_results = await run_tasks_asynchronously(params, 
                                                                                                          tof,
                                                                                                           inputs_df,
                                                                                                           baseline_df,
