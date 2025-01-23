@@ -10,6 +10,7 @@ from ajusta_teto_cohort import *
 from colored import colored
 from rounding_tool import *
 import asyncio
+import nest_asyncio
 
 
 def run_planning_funnel_cohort_bb(projeto,
@@ -393,8 +394,12 @@ def building_blocks(inputs_df,
     
     output_cohort_results = []
     output_coincident_results = []
-    
-    asyncio.run(main())
+
+    # Apply nest_asyncio to allow nested event loops
+    nest_asyncio.apply()
+
+    # Run the main function using nest_asyncio
+    asyncio.get_event_loop().run_until_complete(main())
 
     # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
     output_cohort_final = pd.concat(output_cohort_results)
