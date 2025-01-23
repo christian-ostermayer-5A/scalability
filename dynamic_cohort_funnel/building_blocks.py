@@ -9,7 +9,7 @@ from redutor_de_base import *
 from ajusta_teto_cohort import *
 from colored import colored
 from rounding_tool import *
-
+import asyncio
 
 
 def run_planning_funnel_cohort_bb(projeto,
