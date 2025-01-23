@@ -399,6 +399,7 @@ def building_blocks(inputs_df,
     nest_asyncio.apply()
 
     # Run the main function using nest_asyncio
+    params = projetos
     asyncio.get_event_loop().run_until_complete(main())
 
     # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
