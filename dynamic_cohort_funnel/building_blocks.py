@@ -399,8 +399,26 @@ def building_blocks(inputs_df,
     nest_asyncio.apply()
 
     # Run the main function using nest_asyncio
-    params = projetos
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.get_event_loop().run_until_complete(main(projetos,
+                                                      tof,
+                                                      inputs_df,
+                                                      baseline_df,
+                                                      baseline_cohort,
+                                                      dict_grupos,
+                                                      nome_coluna_week_origin,
+                                                      coluna_de_semanas,
+                                                      ToF_semanal_tof,
+                                                      base_df_on_top,
+                                                      base_df_impacto_feriados,
+                                                      aplicacao_ajuste,
+                                                      chaves_cohort,
+                                                      chaves_coincident,
+                                                      etapas_cohort,
+                                                      etapas_coincident,
+                                                      etapas_cohort_x,
+                                                      etapas_cohort_y,
+                                                      etapas_coincident_x,
+                                                      etapas_coincident_y))
 
     # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
     output_cohort_final = pd.concat(output_cohort_results)
