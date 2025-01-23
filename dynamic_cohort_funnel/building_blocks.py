@@ -210,6 +210,32 @@ async def run_tasks_asynchronously(params,
 _____________________________________________________________________________________________________________________________
 '''
 
+async def main():
+  output_cohort_results,output_coincident_results,output_diario_results = await run_tasks_asynchronously(params, 
+                                                                                                         tof,
+                                                                                                          inputs_df,
+                                                                                                          baseline_df,
+                                                                                                          baseline_cohort,
+                                                                                                          dict_grupos,
+                                                                                                          nome_coluna_week_origin,
+                                                                                                          coluna_de_semanas,
+                                                                                                          ToF_semanal_tof,
+                                                                                                          base_df_on_top,
+                                                                                                          base_df_impacto_feriados,
+                                                                                                          aplicacao_ajuste,
+                                                                                                          chaves_cohort,
+                                                                                                          chaves_coincident,
+                                                                                                          etapas_cohort,
+                                                                                                          etapas_coincident,
+                                                                                                          etapas_cohort_x,
+                                                                                                          etapas_cohort_y,
+                                                                                                          etapas_coincident_x,
+                                                                                                          etapas_coincident_y)
+
+'''
+_____________________________________________________________________________________________________________________________
+'''
+
 def building_blocks(inputs_df,
                     baseline_cohort,
                     ToF_semanal,
@@ -368,29 +394,7 @@ def building_blocks(inputs_df,
     output_cohort_results = []
     output_coincident_results = []
     
-    loop = asyncio.get_event_loop()
-    output_cohort_results,output_coincident_results,output_diario_results = loop.run_until_complete(run_tasks_asynchronously(projetos, 
-                                                                                                                             tof,
-                                                                                                                            inputs_df,
-                                                                                                                            baseline_df,
-                                                                                                                            baseline_cohort,
-                                                                                                                            dict_grupos,
-                                                                                                                            nome_coluna_week_origin,
-                                                                                                                            coluna_de_semanas,
-                                                                                                                            ToF_semanal_tof,
-                                                                                                                            base_df_on_top,
-                                                                                                                            base_df_impacto_feriados,
-                                                                                                                            aplicacao_ajuste,
-                                                                                                                            chaves_cohort,
-                                                                                                                            chaves_coincident,
-                                                                                                                            etapas_cohort,
-                                                                                                                            etapas_coincident,
-                                                                                                                            etapas_cohort_x,
-                                                                                                                            etapas_cohort_y,
-                                                                                                                            etapas_coincident_x,
-                                                                                                                            etapas_coincident_y))
-
-
+    await main()
 
     # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
     output_cohort_final = pd.concat(output_cohort_results)
