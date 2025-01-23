@@ -182,7 +182,7 @@ async def run_tasks_asynchronously(params,
                                   etapas_cohort_y,
                                   etapas_coincident_x,
                                   etapas_coincident_y):
-    tasks = [async_time_consuming_task(param, 
+    tasks = [async_planning_funnel_cohort_bb(param, 
                                        tof,
                                         inputs_df,
                                         baseline_df,
