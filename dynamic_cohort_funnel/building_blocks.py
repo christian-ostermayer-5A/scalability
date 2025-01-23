@@ -9,8 +9,7 @@ from redutor_de_base import *
 from ajusta_teto_cohort import *
 from colored import colored
 from rounding_tool import *
-import concurrent.futures
-import os
+
 
 
 def run_planning_funnel_cohort_bb(projeto,
@@ -113,9 +112,103 @@ def run_planning_funnel_cohort_bb(projeto,
 _____________________________________________________________________________________________________________________________
 '''
 
+async def async_planning_funnel_cohort_bb(projeto,
+                                  tof,
+                                  inputs_df,
+                                  baseline_df,
+                                  baseline_cohort,
+                                  dict_grupos,
+                                  nome_coluna_week_origin,
+                                  coluna_de_semanas,
+                                  ToF_semanal_tof,
+                                  base_df_on_top,
+                                  base_df_impacto_feriados,
+                                  aplicacao_ajuste,
+                                  chaves_cohort,
+                                  chaves_coincident,
+                                  etapas_cohort,
+                                  etapas_coincident,
+                                  etapas_cohort_x,
+                                  etapas_cohort_y,
+                                  etapas_coincident_x,
+                                  etapas_coincident_y):
+                                    
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, run_planning_funnel_cohort_bb, 
+                                              projeto,
+                                              tof,
+                                              inputs_df,
+                                              baseline_df,
+                                              baseline_cohort,
+                                              dict_grupos,
+                                              nome_coluna_week_origin,
+                                              coluna_de_semanas,
+                                              ToF_semanal_tof,
+                                              base_df_on_top,
+                                              base_df_impacto_feriados,
+                                              aplicacao_ajuste,
+                                              chaves_cohort,
+                                              chaves_coincident,
+                                              etapas_cohort,
+                                              etapas_coincident,
+                                              etapas_cohort_x,
+                                              etapas_cohort_y,
+                                              etapas_coincident_x,
+                                              etapas_coincident_y)
+    return result
 
+'''
+_____________________________________________________________________________________________________________________________
+'''
 
+async def run_tasks_asynchronously(params, 
+                                   tof,
+                                  inputs_df,
+                                  baseline_df,
+                                  baseline_cohort,
+                                  dict_grupos,
+                                  nome_coluna_week_origin,
+                                  coluna_de_semanas,
+                                  ToF_semanal_tof,
+                                  base_df_on_top,
+                                  base_df_impacto_feriados,
+                                  aplicacao_ajuste,
+                                  chaves_cohort,
+                                  chaves_coincident,
+                                  etapas_cohort,
+                                  etapas_coincident,
+                                  etapas_cohort_x,
+                                  etapas_cohort_y,
+                                  etapas_coincident_x,
+                                  etapas_coincident_y):
+    tasks = [async_time_consuming_task(param, 
+                                       tof,
+                                        inputs_df,
+                                        baseline_df,
+                                        baseline_cohort,
+                                        dict_grupos,
+                                        nome_coluna_week_origin,
+                                        coluna_de_semanas,
+                                        ToF_semanal_tof,
+                                        base_df_on_top,
+                                        base_df_impacto_feriados,
+                                        aplicacao_ajuste,
+                                        chaves_cohort,
+                                        chaves_coincident,
+                                        etapas_cohort,
+                                        etapas_coincident,
+                                        etapas_cohort_x,
+                                        etapas_cohort_y,
+                                        etapas_coincident_x,
+                                        etapas_coincident_y) for param in params]
+                                    
+    results = await asyncio.gather(*tasks)
+    output_cohort_results,output_coincident_results,output_diario_results = zip(*results)
+    return output_cohort_results,output_coincident_results,output_diario_results
 
+'''
+_____________________________________________________________________________________________________________________________
+'''
 
 def building_blocks(inputs_df,
                     baseline_cohort,
@@ -270,56 +363,40 @@ def building_blocks(inputs_df,
 
     # Calculamos cada projeto individualmente:
     #_______________________________________________________________________________________________
-    #num_cores = os.cpu_count()
-    # o número de workers do cluster P&P Scalability é Driver: 4 cores, 2 Workers: 8 cores each (total 16 cores) = 20 cores:
-    num_cores = 20-2
+
     
     output_cohort_results = []
     output_coincident_results = []
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_cores) as executor:
-      
-      # Submit tasks to the executor
-      future_to_projeto = {executor.submit(run_planning_funnel_cohort_bb, projeto,
-                                                                        tof,
-                                                                        inputs_df,
-                                                                        baseline_df,
-                                                                        baseline_cohort,
-                                                                        dict_grupos,
-                                                                        nome_coluna_week_origin,
-                                                                        coluna_de_semanas,
-                                                                        ToF_semanal_tof,
-                                                                        base_df_on_top,
-                                                                        base_df_impacto_feriados,
-                                                                        aplicacao_ajuste,
-                                                                        chaves_cohort,
-                                                                        chaves_coincident,
-                                                                        etapas_cohort,
-                                                                        etapas_coincident,
-                                                                        etapas_cohort_x,
-                                                                        etapas_cohort_y,
-                                                                        etapas_coincident_x,
-                                                                        etapas_coincident_y): projeto for projeto in projetos}
-        
-      # Process results as they complete
-      for future in concurrent.futures.as_completed(future_to_projeto):
-          projeto = future_to_projeto[future]
-          try:
-              output_cohort_result, output_coincident_result, output_daily_result = future.result()
 
-              output_cohort_results.append(output_cohort_result)
-              output_coincident_results.append(output_coincident_result)
-          except Exception as exc:
-              print(f'{data} generated an exception: {exc}')
+    output_cohort_results,output_coincident_results,output_diario_results = asyncio.run(run_tasks_asynchronously(projetos, 
+                                                                                                                 tof,
+                                                                                                                inputs_df,
+                                                                                                                baseline_df,
+                                                                                                                baseline_cohort,
+                                                                                                                dict_grupos,
+                                                                                                                nome_coluna_week_origin,
+                                                                                                                coluna_de_semanas,
+                                                                                                                ToF_semanal_tof,
+                                                                                                                base_df_on_top,
+                                                                                                                base_df_impacto_feriados,
+                                                                                                                aplicacao_ajuste,
+                                                                                                                chaves_cohort,
+                                                                                                                chaves_coincident,
+                                                                                                                etapas_cohort,
+                                                                                                                etapas_coincident,
+                                                                                                                etapas_cohort_x,
+                                                                                                                etapas_cohort_y,
+                                                                                                                etapas_coincident_x,
+                                                                                                                etapas_coincident_y))
 
 
 
+    # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
+    output_cohort_final = pd.concat(output_cohort_results)
+    output_coincident_final = pd.concat(output_coincident_results)
 
-      # Para cada BB de projeto, adicionamos o funil calculado ao BB do projeto anterior
-      output_cohort_final = pd.concat(output_cohort_results)
-      output_coincident_final = pd.concat(output_coincident_results)
-
-      #---------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
 
     # Para cada BB de ToF, adicionamos o nome do BB ToF e adicionamos ao funil anterior
     output_cohort_final['building block tof'] = tof
