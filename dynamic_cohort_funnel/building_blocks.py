@@ -211,7 +211,26 @@ async def run_tasks_asynchronously(params,
 _____________________________________________________________________________________________________________________________
 '''
 
-async def main():
+async def main(params, 
+               tof,
+                inputs_df,
+                baseline_df,
+                baseline_cohort,
+                dict_grupos,
+                nome_coluna_week_origin,
+                coluna_de_semanas,
+                ToF_semanal_tof,
+                base_df_on_top,
+                base_df_impacto_feriados,
+                aplicacao_ajuste,
+                chaves_cohort,
+                chaves_coincident,
+                etapas_cohort,
+                etapas_coincident,
+                etapas_cohort_x,
+                etapas_cohort_y,
+                etapas_coincident_x,
+                etapas_coincident_y):
   output_cohort_results,output_coincident_results,output_diario_results = await run_tasks_asynchronously(params, 
                                                                                                          tof,
                                                                                                           inputs_df,
