@@ -1845,6 +1845,33 @@ def check_feriados(df_feriados,
 
 # @title Def verifica_baseline_100% 
 
+def process_conversions_above_100(df, key_columns, value_columns, conversion_column='conversion'):
+    # Exclude rows where the conversion column is equal to "coincident"
+    df_filtered = df[df[conversion_column] != 'coincident']
+    
+    # Group by all key columns except the conversion column and sum the value columns
+    grouped_df = df_filtered.groupby(key_columns).sum().reset_index()
+    
+    # Ensure that the values do not surpass 1
+    for value_col in value_columns:
+        # Identify rows where the sum surpasses 1
+        surpassing_rows = grouped_df[grouped_df[value_col] > 1]
+        
+        for idx, row in surpassing_rows.iterrows():
+            # Get the original rows that contribute to this group
+            group_keys = {key: row[key] for key in key_columns}
+            original_rows = df_filtered[(df_filtered[list(group_keys)] == pd.Series(group_keys)).all(axis=1)]
+            
+            # Calculate the total value and the proportion to adjust
+            total_value = row[value_col]
+            proportion = 1 / total_value
+            
+            # Adjust the original rows proportionally
+            for orig_idx in original_rows.index:
+                df.loc[orig_idx, value_col] = df.loc[orig_idx, value_col] * proportion
+    
+    return df
+  
 def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoes,coluna_idx_cohort='week origin'):
 
   mensagem = ''
@@ -1879,8 +1906,31 @@ def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoe
 
   if len(df1.index) >0:
     mensagem = mensagem + f'\n \n Atenção! Algumas das cohorts seguintes apresentam soma maior que 100% na base de \033[1;33mbaselines\033[0;0;0m no arquivo \033[1;34m{nome_do_arquivo}\033[0;0;0m \n {tabulate(df1, headers=list(df1.columns), tablefmt="psql")}'
-    contagem_de_erros += 1
+    mensagem = mensagem + '\n\nSerá feita uma tentativa de redistribuição das cohorts que passaram de 100% utilizando a função '+colored('process_conversions_above_100','blue')
+    #contagem_de_erros += 1
+
+    # Caso exista erro, vamos tentar redistribuir as conversões que passaram de 100%.
+    df_baseline = process_conversions_above_100(df = df_baseline, 
+                                                key_columns = lista_chaves, 
+                                                value_columns = colunas_conversoes)
+
+    #------------------
+    # Realizamos o check das conversões novamente:
+
+    df_baseline_sem_ajuste = df_baseline[df_baseline[coluna_idx_cohort] != 'Coincident']
+    df_group = df_baseline_sem_ajuste.groupby(lista_chaves, as_index=False)[colunas_conversoes].sum()
+    df1 = df_group[(df_group[colunas_conversoes] > 1.0001).any(axis=1)]
+
+    # passando de float pra porcentagem pro print ficar bonitinho
+    for coluna in colunas_conversoes:
+      df1[coluna] = df1[coluna].map(lambda n: '{:.2%}'.format(n))
+
+    if len(df1.index) >0:
+      mensagem = mensagem + f'\n \n Atenção! Algumas das cohorts seguintes apresentam soma maior que 100% na base de \033[1;33mbaselines\033[0;0;0m no arquivo \033[1;34m{nome_do_arquivo}\033[0;0;0m \n {tabulate(df1, headers=list(df1.columns), tablefmt="psql")}'
+      mensagem = mensagem + '\n\nSerá feita uma tentativa de redistribuição das cohorts que passaram de 100% utilizando a função '+colored('process_conversions_above_100','blue')
+      contagem_de_erros += 1  
   
+
   #--------------------
   #verifica se todos os elementos da coluna de week origin são inteiros
   try:
@@ -1903,7 +1953,6 @@ def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoe
       contagem_de_erros += 1
   
   return mensagem, contagem_de_erros
-
 
 
 
