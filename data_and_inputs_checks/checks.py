@@ -2331,6 +2331,7 @@ def check_geral(lista_de_bases,                 # Lista de bases que vamos verif
                                                                     lista_comparacao_a_mais = lista_comparacao_a_mais,
                                                                     chaves_ignoradas = chaves_ignoradas,           # lista de chaves a serem ignoradas se encontradas, como chaves globais "Todos" por exemplo                                                                 
                                                                     tipo_de_tof = tipo_de_tof,
+                                                                    lista_colunas_de_valores = lista_colunas_de_valores,
                                                                     nome_do_arquivo = lista_nomes_arquivos_chaves,
                                                                     agrupar_duplicados = True)
 
