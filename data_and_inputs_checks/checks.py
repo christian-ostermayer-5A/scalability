@@ -801,6 +801,150 @@ def check_valores(df,                    # DataFrame já deve ter checado a exis
 
 
 #@title Def check_chaves
+#-------------------------------------------------------------------------------------------
+
+def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, reference_key_column=None, reference_keys=[], df_keys_not_found_1 = None, df_keys_not_found_2 = None):
+
+    if not df_keys_not_found_1 or not df_keys_not_found_2:
+      unique_keys_1 = df_1[shared_key_columns]
+      unique_keys_1 = unique_keys_1.groupby(shared_key_columns, as_index=False).sum()
+      unique_keys_1 = unique_keys_1[shared_key_columns]
+
+      unique_keys_2 = df_2[shared_key_columns]
+      unique_keys_2 = unique_keys_2.groupby(shared_key_columns, as_index=False).sum()
+      unique_keys_2 = unique_keys_2[shared_key_columns]
+
+      unique_keys_1['aux'] = 1
+      unique_keys_2['aux'] = 1
+
+      merge_unique_keys = pd.merge(unique_keys_1,unique_keys_2,how='outer',on=shared_key_columns)
+
+      df_keys_not_found_1 = merge_unique_keys.loc[merge_unique_keys['aux_x'].isnull()][shared_key_columns]
+      df_keys_not_found_2 = merge_unique_keys.loc[merge_unique_keys['aux_y'].isnull()][shared_key_columns]
+
+    # Make a copy of the original df_keys_not_found_2
+    original_df_keys_not_found_2 = df_keys_not_found_2.copy()
+    original_shared_key_columns = shared_key_columns.copy()
+
+    # Handle reference key replacements
+    if reference_key_column and reference_key_column in shared_key_columns:
+        for ref_key in reference_keys:
+            # Replace the reference key column values in df_keys_not_found_2 with the current reference key
+            starting_df_keys_not_found_2 = df_keys_not_found_2.copy()
+            df_keys_not_found_2[reference_key_column] = ref_key
+
+            # Merge to find the combinations that exist in df_2
+            merged_df = df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
+
+            # Replace the reference key column values in found_keys with the original not found key
+            merged_df = merged_df.merge(starting_df_keys_not_found_2, on=list(set(shared_key_columns)-set([reference_key_column])), how='left',suffixes=('_x', ''))
+            for col in merged_df.columns.values:
+                if "_x" in col:
+                    merged_df.drop(col, axis=1, inplace=True)
+
+            # Separate found and not found keys
+            found_keys = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
+            not_found_keys = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+            
+
+            # Add found keys to df_2
+            if len(found_keys) > 0:
+              df_2 = pd.concat([df_2, found_keys], ignore_index=True)
+
+            # Update df_keys_not_found_2 to only contain not found keys
+            df_keys_not_found_2 = not_found_keys
+
+            # Break if all keys are found
+            if len(df_keys_not_found_2) == 0:
+                break
+    '''
+    print("**************************************************************************************")
+    '''
+    # Reset df_keys_not_found_2 to the original, excluding the found keys
+    df_keys_not_found_2 = original_df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
+    df_keys_not_found_2 = df_keys_not_found_2[df_keys_not_found_2['_merge'] == 'left_only'].drop(columns=['_merge'])
+
+    # Identify additional key columns in df_2 that are not in shared_key_columns
+    additional_key_columns = [col for col in df_2.columns if col not in shared_key_columns + value_columns_2]
+    
+    # Process df_keys_not_found_2 for average replacements
+    while len(df_keys_not_found_2) > 0 and len(shared_key_columns) > 0:
+        # Remove the last shared key column from df_keys_not_found_2
+        last_key_column = shared_key_columns[-1]
+        df_keys_not_found_2 = df_keys_not_found_2.drop(columns=[last_key_column])
+
+        df_2_group_key_columns = list(set(df_2.columns.values)-set(original_shared_key_columns)-set(value_columns_2))+shared_key_columns[:-1]
+
+        # Group df_2 by the shortened shared key columns and calculate the average values
+        if len(shared_key_columns[:-1]) > 0:
+            grouped_df_2 = df_2.groupby(df_2_group_key_columns).mean().reset_index()
+
+            # Create a DataFrame with unique combinations of additional key columns from df_2
+            unique_additional_keys = df_2[additional_key_columns].drop_duplicates()
+
+            # Merge the averages with df_keys_not_found_2
+            df_keys_not_found_2 = df_keys_not_found_2.merge(grouped_df_2, on=shared_key_columns[:-1], how='left')
+
+            for col in df_keys_not_found_2:
+              if "_x" in col:
+                df_keys_not_found_2.drop(col, axis=1, inplace=True)
+              elif "_y" in col:
+                df_keys_not_found_2.rename(columns = {col:col.replace("_y", "")}, inplace=True)
+
+        else:
+            # If no more shared key columns to group by, break the loop
+            break
+
+        # Separate found and not found keys
+        found_keys = df_keys_not_found_2.dropna(subset=value_columns_2)
+        not_found_keys = df_keys_not_found_2[df_keys_not_found_2[value_columns_2].isnull().any(axis=1)]
+
+        # Add found_keys to the original df_keys_not_found_2 to find the complete combination to be added to df_2
+        df_keys_not_found_2_replaced = original_df_keys_not_found_2.merge(found_keys, on=shared_key_columns[:-1], how='left')
+        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced.groupby(additional_key_columns+original_shared_key_columns).mean().reset_index()
+
+        # Remove replaced keys that already exists on df_2
+        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced.merge(df_2, on=shared_key_columns, how='left', indicator=True, suffixes=['', '_x'])
+        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced[df_keys_not_found_2_replaced['_merge'] == 'left_only'].drop(columns=['_merge'])
+        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced[additional_key_columns+original_shared_key_columns+value_columns_2]
+
+        # Add found keys to df_2
+        df_2 = pd.concat([df_2, df_keys_not_found_2_replaced], ignore_index=True)
+
+        # Update df_keys_not_found_2 to only contain not found keys
+        df_keys_not_found_2 = not_found_keys
+        
+        # Remove the last shared key column from the shared key columns list
+        shared_key_columns = shared_key_columns[:-1]
+
+        # Break if no more shared key columns to remove
+        if len(shared_key_columns) == 0:
+            break
+        
+        '''
+        print("------------------------------------------------------------------")
+        '''
+    # Drop duplicate columns if any
+    df_2 = df_2.loc[:, ~df_2.columns.duplicated()]
+
+    # Remove key combinations from df_2 that are not found in df_1
+    if len(df_keys_not_found_1) > 0:
+        df_2 = df_2.merge(df_keys_not_found_1, on=original_shared_key_columns, how='left', indicator=True)
+        print(df_2)
+        df_2 = df_2[df_2['_merge'] == 'left_only'].drop(columns=['_merge'])
+    
+    '''
+    print(df_keys_not_found_1)
+    print(df_2)
+    print("____________________________________________________________")
+    '''
+    
+    # Check for duplicate rows ignoring value columns and raise an error if any are found
+    if df_2.duplicated(subset=[col for col in df_2.columns if col not in value_columns_2]).any():
+        raise ValueError("The final DataFrame contains duplicate rows based on key columns.")
+
+    return df_2
+
 
 def check_chaves(lista_df,                   # lista de DataFrames já devem ter as colunas de valores formatadas
                  aberturas_compartilhadas,   # lista com as aberturas que devem estar presentes em todas as bases da lista de dataframes
@@ -809,6 +953,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                  chaves_ignoradas,           # lista de chaves a serem ignoradas se encontradas, como chaves globais "Todos" por exemplo
                  nome_do_arquivo,
                  agrupar_duplicados,
+                 lista_colunas_de_valores,  # Usada somente no caso específico da alocação de aberturas entre baseline cohort e tof no planning
                  lista_comparacao_a_mais = [],
                  tipo_de_tof = 'Sem Tipo'):     
   
@@ -917,95 +1062,69 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
   if tipo_de_tof == 'Input Externo' and len(lista_df) > 3:
     if len(lista_df[2])>0:
       indice_base_modelo = 2
-  combinacoes = [x for x in combinacoes if 0 in list(x)]
-
-  # Para cada combinação de índices:
-  for i in range(len(combinacoes)):
-
-    indice_1 = list(combinacoes[i])[0]
-    indice_2 = list(combinacoes[i])[1]
-
-    nome_df_1 = lista_df_atualizada[indice_1].name
-    nome_df_2 = lista_df_atualizada[indice_2].name
-
-    aberturas_1 = lista_aberturas[indice_1]
-    aberturas_2 = lista_aberturas[indice_2]
-
-    nome_do_arquivo_1 = nome_do_arquivo[indice_1]
-    nome_do_arquivo_2 = nome_do_arquivo[indice_2]
-
-    # Verificamos a existência de chaves entre as bases abertura por abertura:
-    for col in aberturas_compartilhadas:
-      chaves_unicas_1 = list(np.unique(aberturas_1[col].values))
-      chaves_unicas_2 = list(np.unique(aberturas_2[col].values))
-
-      # vamos remover as chaves que devem ser ignoradas na comparação
-      for c in chaves_ignoradas:
-        if c in chaves_unicas_1:
-          chaves_unicas_1.remove(c)
-        if c in chaves_unicas_2:
-          chaves_unicas_2.remove(c)
-
-      chaves_1_2 = list(set(chaves_unicas_1) - set(chaves_unicas_2))
-      chaves_2_1 = list(set(chaves_unicas_2) - set(chaves_unicas_1))
-
-
-      if len(lista_comparacao_a_mais_atualizada) > 0:
-        if len(chaves_1_2) > 0 and not lista_comparacao_parcial_atualizada[indice_2] and not lista_comparacao_a_mais_atualizada[indice_1]:
-          mensagem = mensagem + '\n\nAs chaves '+colored(str(chaves_1_2),'red')+' da abertura '+colored(col,'red')+' da base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') + ' não estão presentes na base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue')
-          erro = erro+1
+  combinacoes = [x for x in combinacoes if indice_base_modelo in list(x)]
   
-        if len(chaves_2_1) > 0 and not lista_comparacao_parcial_atualizada[indice_1] and not lista_comparacao_a_mais_atualizada[indice_2]:
-          mensagem = mensagem + '\n\nAs chaves '+colored(str(chaves_2_1),'red')+' da abertura '+colored(col,'red')+' da base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue') +  ' não estão presentes na base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') 
-          erro = erro+1
-      else:
-        if len(chaves_1_2) > 0 and not lista_comparacao_parcial_atualizada[indice_2]:
-          mensagem = mensagem + '\n\nAs chaves '+colored(str(chaves_1_2),'red')+' da abertura '+colored(col,'red')+' da base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') + ' não estão presentes na base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue')
-          erro = erro+1
+  '''
+  Vamos testar inicialmente somente o baseline e o ToF. 
+
+  Assumindo que a lista de bases fornecidas segue esta ordem:
+  lista_de_bases = [base_df_tof_mensal,
+                    base_df_tof_semanal,
+                    base_df_baseline_conversoes,
   
-        if len(chaves_2_1) > 0 and not lista_comparacao_parcial_atualizada[indice_1]:
-          mensagem = mensagem + '\n\nAs chaves '+colored(str(chaves_2_1),'red')+' da abertura '+colored(col,'red')+' da base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue') +  ' não estão presentes na base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') 
-          erro = erro+1
+  vamos comparar inicialmente apenas a combinação 0 e 2
+  '''
+  # Verificamos se estamos realmente no ambiente de planning:
+  #---------------------------------------------------------------------------------------------------
+  if tipo_de_tof == 'Sem Tipo':
 
-    # Vamos exluir as aberturas que contenham uma chave a ser ignorada:
-    for c in chaves_ignoradas:
-      for coluna in aberturas_compartilhadas:
-        aberturas_1 = aberturas_1.loc[aberturas_1[coluna] != c]
-        aberturas_2 = aberturas_2.loc[aberturas_2[coluna] != c]
+    erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,2]],
+                                                                                lista_df_atualizada = lista_df_atualizada,
+                                                                                lista_aberturas = lista_aberturas,
+                                                                                aberturas_compartilhadas = aberturas_compartilhadas,
+                                                                                chaves_ignoradas = chaves_ignoradas,
+                                                                                lista_comparacao_a_mais_atualizada = lista_comparacao_a_mais_atualizada,
+                                                                                lista_comparacao_parcial_atualizada = lista_comparacao_parcial_atualizada,
+                                                                                mensagem = mensagem,
+                                                                                erro = erro,
+                                                                                nome_do_arquivo = nome_do_arquivo)
+    
+    if flag_erro_chaves_inexistentes:
+      mensagem = mensagem + '\n\n'+colored('Como existe um erro grave de chaves na comparação entre ToF e Baseline Cohort, as outras comparações de chaves entre bases serão ignoradas até o presente erro ser resolvido.','yellow')
+    
+    elif erro > 0:
+      mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF mas não foram encontradas no baseline e remover as aberturas do baseline que não existem no ToF.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
 
-    aberturas_1['aux'] = 1
-    aberturas_2['aux'] = 1
+      try:
+        df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
+                                      df_2 = lista_df_atualizada[2], 
+                                      shared_key_columns = aberturas_compartilhadas, 
+                                      value_columns_2 = lista_colunas_de_valores[2], 
+                                      reference_key_column='city_group', 
+                                      reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
+        
+        lista_df_atualizada[2] = df_2
+        lista_df[2] = df_2
+        
+        mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida.','green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
+        
+      except:
+        mensagem = mensagem + '\n\n'+colored('Houve um erro na tentativa de executar a função "alocate_not_found_keys".','red')
+  #---------------------------------------------------------------------------------------------------
 
-    merge = pd.merge(aberturas_1,aberturas_2,how='outer',on=aberturas_compartilhadas)
 
-    aberturas_nao_existentes_1 = merge.loc[merge['aux_x'].isnull()][aberturas_compartilhadas]
-    aberturas_nao_existentes_2 = merge.loc[merge['aux_y'].isnull()][aberturas_compartilhadas]
+  erro = 0
+  erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = combinacoes,
+                                                                      lista_df_atualizada = lista_df_atualizada,
+                                                                      lista_aberturas = lista_aberturas,
+                                                                      aberturas_compartilhadas = aberturas_compartilhadas,
+                                                                      chaves_ignoradas = chaves_ignoradas,
+                                                                      lista_comparacao_a_mais_atualizada = lista_comparacao_a_mais_atualizada,
+                                                                      lista_comparacao_parcial_atualizada = lista_comparacao_parcial_atualizada,
+                                                                      mensagem = mensagem,
+                                                                      erro = erro,
+                                                                      nome_do_arquivo = nome_do_arquivo)
 
-
-
-
-    # Verificamos as combinações de chaves entre as bases:
-
-    if len(lista_comparacao_a_mais_atualizada) > 0:
-      if len(aberturas_nao_existentes_1) > 0 and not lista_comparacao_parcial_atualizada[indice_1] and not lista_comparacao_a_mais_atualizada[indice_2]:
-        mensagem = mensagem + '\n\nAs seguintes combinações de aberturas da base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue') + ' não estão presentes na base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') +  ': \n' + tabulate(aberturas_nao_existentes_1, headers='keys', tablefmt='psql')
-        erro = erro+1
-      if len(aberturas_nao_existentes_2) > 0 and not lista_comparacao_parcial_atualizada[indice_2] and not lista_comparacao_a_mais_atualizada[indice_1]:
-        mensagem = mensagem + '\n\nAs seguintes combinações de aberturas da base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') +  ' não estão presentes na base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue') +  ': \n' + tabulate(aberturas_nao_existentes_2, headers='keys', tablefmt='psql')
-        erro = erro+1
-    else:
-      if len(aberturas_nao_existentes_1) > 0 and not lista_comparacao_parcial_atualizada[indice_1]:
-        mensagem = mensagem + '\n\nAs seguintes combinações de aberturas da base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue') + ' não estão presentes na base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') +  ': \n' + tabulate(aberturas_nao_existentes_1, headers='keys', tablefmt='psql')
-        erro = erro+1
-      if len(aberturas_nao_existentes_2) > 0 and not lista_comparacao_parcial_atualizada[indice_2]:
-        mensagem = mensagem + '\n\nAs seguintes combinações de aberturas da base '+colored(nome_df_1,'yellow')+' do arquivo ' + colored(nome_do_arquivo_1,'blue') +  ' não estão presentes na base '+colored(nome_df_2,'yellow')+' do arquivo ' + colored(nome_do_arquivo_2,'blue') +  ': \n' + tabulate(aberturas_nao_existentes_2, headers='keys', tablefmt='psql')
-        erro = erro+1      
-
-      
-  # Retorna:
-  # lista de DataFrames 
-  # string formatada (pulando lunhas e com cores) da mensagem de erro ou aviso
-  # inteiro representando o número de erros que esse check encontrou
   return lista_df,mensagem,erro
 
 
