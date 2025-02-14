@@ -2511,6 +2511,7 @@ def check_building_blocks(base_tof_semanal,
                                                         aberturas_especificas = [coluna_de_semanas,'mês','ano']+['building block cohort','Conversão','Aplicação','Etapa'],      # lista com as aberturas que não precisam estar presentes em todas as bases
                                                         lista_comparacao_parcial = [False,False,True],   # lista de booleanos indicando quais bases serão checadas se contém todas as aberturas de todas as bases ou se contém aberturas que outras bases não tem
                                                         chaves_ignoradas = chaves_ignoradas,           # lista de chaves a serem ignoradas se encontradas, como chaves globais "Todos" por exemplo
+                                                        lista_colunas_de_valores = [],
                                                         agrupar_duplicados = True,
                                                         nome_do_arquivo = nome_do_arquivo)   
 
