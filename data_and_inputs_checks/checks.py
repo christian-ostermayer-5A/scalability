@@ -804,6 +804,8 @@ def check_valores(df,                    # DataFrame já deve ter checado a exis
 #-------------------------------------------------------------------------------------------
 
 def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, reference_key_column=None, reference_keys=[], df_keys_not_found_1 = None, df_keys_not_found_2 = None):
+
+  nome = df_2.name
   
   if not df_keys_not_found_1 or not df_keys_not_found_2:
     unique_keys_1 = df_1[shared_key_columns]
@@ -955,6 +957,8 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
   if len(df_2_grouped) < len(df_2):
     raise ValueError("The final DataFrame contains duplicate rows based on key columns.")
   '''
+  df_2_grouped.name = nome
+  
   return df_2_grouped
 
 
