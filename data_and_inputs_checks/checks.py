@@ -949,7 +949,7 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
   
   # Check for duplicate rows ignoring value columns and raise an error if any are found
   if df_2.duplicated(subset=[col for col in df_2.columns if col not in value_columns_2]).any():
-    raise ValueError("The final DataFrame contains duplicate rows based on key columns.",df_2)
+    raise ValueError("The final DataFrame contains duplicate rows based on key columns.",df_2.duplicated(subset=[col for col in df_2.columns if col not in value_columns_2]))
 
   return df_2
 
