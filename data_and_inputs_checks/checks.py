@@ -804,152 +804,154 @@ def check_valores(df,                    # DataFrame já deve ter checado a exis
 #-------------------------------------------------------------------------------------------
 
 def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, reference_key_column=None, reference_keys=[], df_keys_not_found_1 = None, df_keys_not_found_2 = None):
+  
+  if not df_keys_not_found_1 or not df_keys_not_found_2:
+    unique_keys_1 = df_1[shared_key_columns]
+    unique_keys_1 = unique_keys_1.groupby(shared_key_columns, as_index=False).sum()
+    unique_keys_1 = unique_keys_1[shared_key_columns]
 
-    if not df_keys_not_found_1 or not df_keys_not_found_2:
-      unique_keys_1 = df_1[shared_key_columns]
-      unique_keys_1 = unique_keys_1.groupby(shared_key_columns, as_index=False).sum()
-      unique_keys_1 = unique_keys_1[shared_key_columns]
+    unique_keys_2 = df_2[shared_key_columns]
+    unique_keys_2 = unique_keys_2.groupby(shared_key_columns, as_index=False).sum()
+    unique_keys_2 = unique_keys_2[shared_key_columns]
 
-      unique_keys_2 = df_2[shared_key_columns]
-      unique_keys_2 = unique_keys_2.groupby(shared_key_columns, as_index=False).sum()
-      unique_keys_2 = unique_keys_2[shared_key_columns]
+    unique_keys_1['aux'] = 1
+    unique_keys_2['aux'] = 1
 
-      unique_keys_1['aux'] = 1
-      unique_keys_2['aux'] = 1
+    merge_unique_keys = pd.merge(unique_keys_1,unique_keys_2,how='outer',on=shared_key_columns)
 
-      merge_unique_keys = pd.merge(unique_keys_1,unique_keys_2,how='outer',on=shared_key_columns)
+    df_keys_not_found_1 = merge_unique_keys.loc[merge_unique_keys['aux_x'].isnull()][shared_key_columns]
+    df_keys_not_found_2 = merge_unique_keys.loc[merge_unique_keys['aux_y'].isnull()][shared_key_columns]
 
-      df_keys_not_found_1 = merge_unique_keys.loc[merge_unique_keys['aux_x'].isnull()][shared_key_columns]
-      df_keys_not_found_2 = merge_unique_keys.loc[merge_unique_keys['aux_y'].isnull()][shared_key_columns]
+    print("**********************************************************")
+    print(df_keys_not_found_2.columns.values)
 
-      print("**********************************************************")
+  
+  # Make a copy of the original df_keys_not_found_2
+  original_df_keys_not_found_2 = df_keys_not_found_2.copy()
+  original_shared_key_columns = shared_key_columns.copy()
+
+  # Handle reference key replacements
+  if reference_key_column and reference_key_column in shared_key_columns:
+    for ref_key in reference_keys:
+      # Replace the reference key column values in df_keys_not_found_2 with the current reference key
+      starting_df_keys_not_found_2 = df_keys_not_found_2.copy()
+      df_keys_not_found_2[reference_key_column] = ref_key
+
+      # Merge to find the combinations that exist in df_2
+      merged_df = df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
+
+      print("¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨")
       print(df_keys_not_found_2.columns.values)
-
-    # Make a copy of the original df_keys_not_found_2
-    original_df_keys_not_found_2 = df_keys_not_found_2.copy()
-    original_shared_key_columns = shared_key_columns.copy()
-
-    # Handle reference key replacements
-    if reference_key_column and reference_key_column in shared_key_columns:
-        for ref_key in reference_keys:
-            # Replace the reference key column values in df_keys_not_found_2 with the current reference key
-            starting_df_keys_not_found_2 = df_keys_not_found_2.copy()
-            df_keys_not_found_2[reference_key_column] = ref_key
-
-            # Merge to find the combinations that exist in df_2
-            merged_df = df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
-
-            print("¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨")
-        	  print(df_keys_not_found_2.columns.values)
-            # Replace the reference key column values in found_keys with the original not found key
-            merged_df = merged_df.merge(starting_df_keys_not_found_2, on=list(set(shared_key_columns)-set([reference_key_column])), how='left',suffixes=('_x', ''))
-            for col in merged_df.columns.values:
-                if "_x" in col:
-                  merged_df.drop(col, axis=1, inplace=True)
+      # Replace the reference key column values in found_keys with the original not found key
+      merged_df = merged_df.merge(starting_df_keys_not_found_2, on=list(set(shared_key_columns)-set([reference_key_column])), how='left',suffixes=('_x', ''))
+      for col in merged_df.columns.values:
+        if "_x" in col:
+          merged_df.drop(col, axis=1, inplace=True)
 
 
-            # Separate found and not found keys
-            found_keys = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
-            not_found_keys = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
-            
+      # Separate found and not found keys
+      found_keys = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
+      not_found_keys = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+      
 
-            # Add found keys to df_2
-            if len(found_keys) > 0:
-              df_2 = pd.concat([df_2, found_keys], ignore_index=True)
+      # Add found keys to df_2
+      if len(found_keys) > 0:
+        df_2 = pd.concat([df_2, found_keys], ignore_index=True)
 
-            # Update df_keys_not_found_2 to only contain not found keys
-            df_keys_not_found_2 = not_found_keys
+      # Update df_keys_not_found_2 to only contain not found keys
+      df_keys_not_found_2 = not_found_keys
 
-            # Break if all keys are found
-            if len(df_keys_not_found_2) == 0:
-                break
-    '''
-    print("**************************************************************************************")
-    '''
-    # Reset df_keys_not_found_2 to the original, excluding the found keys
-    df_keys_not_found_2 = original_df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
-    df_keys_not_found_2 = df_keys_not_found_2[df_keys_not_found_2['_merge'] == 'left_only'].drop(columns=['_merge'])
-
-    # Identify additional key columns in df_2 that are not in shared_key_columns
-    additional_key_columns = [col for col in df_2.columns if col not in shared_key_columns + value_columns_2]
-    
-    # Process df_keys_not_found_2 for average replacements
-    while len(df_keys_not_found_2) > 0 and len(shared_key_columns) > 0:
-        # Remove the last shared key column from df_keys_not_found_2
-        last_key_column = shared_key_columns[-1]
-        df_keys_not_found_2 = df_keys_not_found_2.drop(columns=[last_key_column])
-
-        df_2_group_key_columns = list(set(df_2.columns.values)-set(original_shared_key_columns)-set(value_columns_2))+shared_key_columns[:-1]
-
-        # Group df_2 by the shortened shared key columns and calculate the average values
-        if len(shared_key_columns[:-1]) > 0:
-            grouped_df_2 = df_2.groupby(df_2_group_key_columns).mean().reset_index()
-
-            # Create a DataFrame with unique combinations of additional key columns from df_2
-            unique_additional_keys = df_2[additional_key_columns].drop_duplicates()
-
-            # Merge the averages with df_keys_not_found_2
-            df_keys_not_found_2 = df_keys_not_found_2.merge(grouped_df_2, on=shared_key_columns[:-1], how='left')
-
-            for col in df_keys_not_found_2:
-              if "_x" in col:
-                df_keys_not_found_2.drop(col, axis=1, inplace=True)
-              elif "_y" in col:
-                df_keys_not_found_2.rename(columns = {col:col.replace("_y", "")}, inplace=True)
-
-        else:
-            # If no more shared key columns to group by, break the loop
-            break
-
-        # Separate found and not found keys
-        found_keys = df_keys_not_found_2.dropna(subset=value_columns_2)
-        not_found_keys = df_keys_not_found_2[df_keys_not_found_2[value_columns_2].isnull().any(axis=1)]
-
-        # Add found_keys to the original df_keys_not_found_2 to find the complete combination to be added to df_2
-        df_keys_not_found_2_replaced = original_df_keys_not_found_2.merge(found_keys, on=shared_key_columns[:-1], how='left')
-        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced.groupby(additional_key_columns+original_shared_key_columns).mean().reset_index()
-
-        # Remove replaced keys that already exists on df_2
-        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced.merge(df_2, on=shared_key_columns, how='left', indicator=True, suffixes=['', '_x'])
-        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced[df_keys_not_found_2_replaced['_merge'] == 'left_only'].drop(columns=['_merge'])
-        df_keys_not_found_2_replaced = df_keys_not_found_2_replaced[additional_key_columns+original_shared_key_columns+value_columns_2]
-
-        # Add found keys to df_2
-        df_2 = pd.concat([df_2, df_keys_not_found_2_replaced], ignore_index=True)
-
-        # Update df_keys_not_found_2 to only contain not found keys
-        df_keys_not_found_2 = not_found_keys
+      # Break if all keys are found
+      if len(df_keys_not_found_2) == 0:
+        break
         
-        # Remove the last shared key column from the shared key columns list
-        shared_key_columns = shared_key_columns[:-1]
+  '''
+  print("**************************************************************************************")
+  '''
+  # Reset df_keys_not_found_2 to the original, excluding the found keys
+  df_keys_not_found_2 = original_df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
+  df_keys_not_found_2 = df_keys_not_found_2[df_keys_not_found_2['_merge'] == 'left_only'].drop(columns=['_merge'])
 
-        # Break if no more shared key columns to remove
-        if len(shared_key_columns) == 0:
-            break
-        
-        '''
-        print("------------------------------------------------------------------")
-        '''
-    # Drop duplicate columns if any
-    df_2 = df_2.loc[:, ~df_2.columns.duplicated()]
+  # Identify additional key columns in df_2 that are not in shared_key_columns
+  additional_key_columns = [col for col in df_2.columns if col not in shared_key_columns + value_columns_2]
+  
+  # Process df_keys_not_found_2 for average replacements
+  while len(df_keys_not_found_2) > 0 and len(shared_key_columns) > 0:
+    # Remove the last shared key column from df_keys_not_found_2
+    last_key_column = shared_key_columns[-1]
+    df_keys_not_found_2 = df_keys_not_found_2.drop(columns=[last_key_column])
 
-    # Remove key combinations from df_2 that are not found in df_1
-    if len(df_keys_not_found_1) > 0:
-        df_2 = df_2.merge(df_keys_not_found_1, on=original_shared_key_columns, how='left', indicator=True)
-        print(df_2)
-        df_2 = df_2[df_2['_merge'] == 'left_only'].drop(columns=['_merge'])
+    df_2_group_key_columns = list(set(df_2.columns.values)-set(original_shared_key_columns)-set(value_columns_2))+shared_key_columns[:-1]
+
+    # Group df_2 by the shortened shared key columns and calculate the average values
+    if len(shared_key_columns[:-1]) > 0:
+      grouped_df_2 = df_2.groupby(df_2_group_key_columns).mean().reset_index()
+  
+      # Create a DataFrame with unique combinations of additional key columns from df_2
+      unique_additional_keys = df_2[additional_key_columns].drop_duplicates()
+  
+      # Merge the averages with df_keys_not_found_2
+      df_keys_not_found_2 = df_keys_not_found_2.merge(grouped_df_2, on=shared_key_columns[:-1], how='left')
+  
+      for col in df_keys_not_found_2:
+        if "_x" in col:
+          df_keys_not_found_2.drop(col, axis=1, inplace=True)
+        elif "_y" in col:
+          df_keys_not_found_2.rename(columns = {col:col.replace("_y", "")}, inplace=True)
+
+    else:
+      # If no more shared key columns to group by, break the loop
+      break
+
+    # Separate found and not found keys
+    found_keys = df_keys_not_found_2.dropna(subset=value_columns_2)
+    not_found_keys = df_keys_not_found_2[df_keys_not_found_2[value_columns_2].isnull().any(axis=1)]
+
+    # Add found_keys to the original df_keys_not_found_2 to find the complete combination to be added to df_2
+    df_keys_not_found_2_replaced = original_df_keys_not_found_2.merge(found_keys, on=shared_key_columns[:-1], how='left')
+    df_keys_not_found_2_replaced = df_keys_not_found_2_replaced.groupby(additional_key_columns+original_shared_key_columns).mean().reset_index()
+
+    # Remove replaced keys that already exists on df_2
+    df_keys_not_found_2_replaced = df_keys_not_found_2_replaced.merge(df_2, on=shared_key_columns, how='left', indicator=True, suffixes=['', '_x'])
+    df_keys_not_found_2_replaced = df_keys_not_found_2_replaced[df_keys_not_found_2_replaced['_merge'] == 'left_only'].drop(columns=['_merge'])
+    df_keys_not_found_2_replaced = df_keys_not_found_2_replaced[additional_key_columns+original_shared_key_columns+value_columns_2]
+
+    # Add found keys to df_2
+    df_2 = pd.concat([df_2, df_keys_not_found_2_replaced], ignore_index=True)
+
+    # Update df_keys_not_found_2 to only contain not found keys
+    df_keys_not_found_2 = not_found_keys
+    
+    # Remove the last shared key column from the shared key columns list
+    shared_key_columns = shared_key_columns[:-1]
+
+    # Break if no more shared key columns to remove
+    if len(shared_key_columns) == 0:
+      break
     
     '''
-    print(df_keys_not_found_1)
-    print(df_2)
-    print("____________________________________________________________")
+    print("------------------------------------------------------------------")
     '''
-    
-    # Check for duplicate rows ignoring value columns and raise an error if any are found
-    if df_2.duplicated(subset=[col for col in df_2.columns if col not in value_columns_2]).any():
-        raise ValueError("The final DataFrame contains duplicate rows based on key columns.")
+  
+  # Drop duplicate columns if any
+  df_2 = df_2.loc[:, ~df_2.columns.duplicated()]
 
-    return df_2
+  # Remove key combinations from df_2 that are not found in df_1
+  if len(df_keys_not_found_1) > 0:
+    df_2 = df_2.merge(df_keys_not_found_1, on=original_shared_key_columns, how='left', indicator=True)
+    df_2 = df_2[df_2['_merge'] == 'left_only'].drop(columns=['_merge'])
+  
+  '''
+  print(df_keys_not_found_1)
+  print(df_2)
+  print("____________________________________________________________")
+  '''
+  
+  # Check for duplicate rows ignoring value columns and raise an error if any are found
+  if df_2.duplicated(subset=[col for col in df_2.columns if col not in value_columns_2]).any():
+    raise ValueError("The final DataFrame contains duplicate rows based on key columns.")
+
+  return df_2
 
 
 def retorna_compatibilidade_chaves(combinacoes,
