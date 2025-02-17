@@ -951,10 +951,11 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
   not_value_columns = list(set(df_2.columns)-set(value_columns_2))
   df_2_grouped = df_2.groupby(not_value_columns).mean().reset_index()
   #if df_2.duplicated(subset=[col for col in df_2.columns if col not in value_columns_2]).any():
+  '''
   if len(df_2_grouped) < len(df_2):
     raise ValueError("The final DataFrame contains duplicate rows based on key columns.")
-
-  return df_2
+  '''
+  return df_2_grouped
 
 
 def retorna_compatibilidade_chaves(combinacoes,
