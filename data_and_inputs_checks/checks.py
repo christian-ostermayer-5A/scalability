@@ -1217,6 +1217,46 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
         
       except:
         mensagem = mensagem + '\n\n'+colored('Houve um erro na tentativa de executar a função "alocate_not_found_keys".','red')
+
+    #--------------------------------------------------------------------------------------------------------
+    '''
+    Vamos testar agora o ToF Mensal e Semanal e criar as aberturas no ToF Semanal se necessário:
+    '''
+    erro = 0
+
+    erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,1]],
+                                                                                lista_df_atualizada = lista_df_atualizada,
+                                                                                lista_aberturas = lista_aberturas,
+                                                                                aberturas_compartilhadas = aberturas_compartilhadas,
+                                                                                chaves_ignoradas = chaves_ignoradas,
+                                                                                lista_comparacao_a_mais_atualizada = lista_comparacao_a_mais_atualizada,
+                                                                                lista_comparacao_parcial_atualizada = lista_comparacao_parcial_atualizada,
+                                                                                mensagem = mensagem,
+                                                                                erro = erro,
+                                                                                nome_do_arquivo = nome_do_arquivo)
+    
+    if flag_erro_chaves_inexistentes:
+      mensagem = mensagem + '\n\n'+colored('Como existe um erro grave de chaves na comparação entre ToF Mensal e ToF Semanal, as outras comparações de chaves entre bases serão ignoradas até o presente erro ser resolvido.','yellow')
+    
+    elif erro > 0:
+      mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF Mensal mas não foram encontradas no ToF Semanal e remover as aberturas do ToF Semanal que não existem no ToF Mensal.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
+    
+      try:
+        df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
+                                      df_2 = lista_df_atualizada[1], 
+                                      shared_key_columns = aberturas_compartilhadas, 
+                                      value_columns_2 = lista_colunas_de_valores[1], 
+                                      reference_key_column='city_group', 
+                                      reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
+        
+        lista_df_atualizada[1] = df_2
+        lista_df[1] = df_2
+        
+        mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida.','green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
+        
+      except:
+        mensagem = mensagem + '\n\n'+colored('Houve um erro na tentativa de executar a função "alocate_not_found_keys".','red')
+    
   #---------------------------------------------------------------------------------------------------
 
 
