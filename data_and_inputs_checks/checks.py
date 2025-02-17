@@ -1279,7 +1279,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
   erro = 0
   print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
   print(len(lista_df_atualizada[1]))
-  print(lista_df_atualizada[1].loc[lista_df_atualizada[1]['planning_operation']=='Capta Aí'])
+  print(lista_df_atualizada[1].loc[(lista_df_atualizada[1]['planning_operation']=='Capta Aí') & (lista_df_atualizada[1]['city_group']=='Cotia')])
   erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = combinacoes,
                                                                       lista_df_atualizada = lista_df_atualizada,
                                                                       lista_aberturas = lista_aberturas,
