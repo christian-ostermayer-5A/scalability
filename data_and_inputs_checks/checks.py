@@ -1216,6 +1216,13 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
         mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida.','green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
         
       except:
+        df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
+                                    df_2 = lista_df_atualizada[2], 
+                                    shared_key_columns = aberturas_compartilhadas, 
+                                    value_columns_2 = lista_colunas_de_valores[2], 
+                                    reference_key_column='city_group', 
+                                    reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
+        
         mensagem = mensagem + '\n\n'+colored('Houve um erro na tentativa de executar a função "alocate_not_found_keys".','red')
 
     #--------------------------------------------------------------------------------------------------------
