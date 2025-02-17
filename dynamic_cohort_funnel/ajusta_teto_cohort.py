@@ -35,8 +35,8 @@ def ajusta_teto_cohort(df_cohort,nome_coluna_week_origin):
 
     if len(df_out.loc[df_out[f"{etapa}_aberta"] > 1]) > 0:
       df_print = df_out.loc[df_out[f"{etapa}_aberta"] > 1]
-      df_print = df_print.iloc[:,1:posi_pre_inicio_dados]
-      df_print = df_print.drop_duplicates()
+      #df_print = df_print.iloc[:,1:posi_pre_inicio_dados]
+      #df_print = df_print.drop_duplicates()
       print(f"As seguintes aberturas da etapa {etapa} passaram de 100% em sua cohort aberta. Foi realizada a correção e as cohorts fechadas foram reduzidas na mesma proporção que tinham antes para a cohort aberta dar 100%")
       pd.options.display.max_columns = None
       pd.options.display.max_rows = None
