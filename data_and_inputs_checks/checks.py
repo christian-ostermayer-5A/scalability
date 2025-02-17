@@ -1272,6 +1272,9 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                                                                       erro = erro,
                                                                       nome_do_arquivo = nome_do_arquivo)
 
+  if erro>0:
+    mensagem = mensagem + '\n\n'+'******************************* '+tipo_de_tof+' '+str(len(lista_colunas_de_valores))
+
   return lista_df,mensagem,erro
 
 
