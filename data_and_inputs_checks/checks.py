@@ -1183,7 +1183,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
   '''
   # Verificamos se estamos realmente no ambiente de planning:
   #---------------------------------------------------------------------------------------------------
-  if tipo_de_tof == 'Sem Tipo' and len(lista_colunas_de_valores) > 0:
+  if (tipo_de_tof == 'Sem Tipo' or tipo_de_tof == '') and len(lista_colunas_de_valores) > 0:
 
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,2]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
@@ -1272,8 +1272,6 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                                                                       erro = erro,
                                                                       nome_do_arquivo = nome_do_arquivo)
 
-  if erro>0:
-    mensagem = mensagem + '\n\n'+'******************************* '+tipo_de_tof+' '+str(len(lista_colunas_de_valores))
 
   return lista_df,mensagem,erro
 
