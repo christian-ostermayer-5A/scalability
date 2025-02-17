@@ -1239,7 +1239,9 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     Vamos testar agora o ToF Mensal e Semanal e criar as aberturas no ToF Semanal se necessário:
     '''
     erro = 0
-
+    print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+    print(len(lista_df_atualizada[1]))
+    print(lista_df_atualizada[1].loc[(lista_df_atualizada[1]['planning_operation']=='Capta Aí') & (lista_df_atualizada[1]['city_group']=='Cotia')])
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,1]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
                                                                                 lista_aberturas = lista_aberturas,
