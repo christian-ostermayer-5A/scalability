@@ -859,7 +859,7 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
         df_2 = pd.concat([df_2, found_keys], ignore_index=True)
 
       # Update df_keys_not_found_2 to only contain not found keys
-      df_keys_not_found_2 = not_found_keys
+      df_keys_not_found_2 = not_found_keys[shared_key_columns]
 
       # Break if all keys are found
       if len(df_keys_not_found_2) == 0:
