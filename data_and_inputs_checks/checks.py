@@ -975,7 +975,9 @@ def retorna_compatibilidade_chaves(combinacoes,
 
   # Vamos iniciar uma flag que aponta um erro crítico, que não pode ser contornado via realocação de chaves
   flag_erro_chaves_inexistentes = False
-
+  print("#######################################################")
+  print(len(lista_df_atualizada[1]))
+  print(lista_df_atualizada[1].loc[(lista_df_atualizada[1]['planning_operation']=='Capta Aí') & (lista_df_atualizada[1]['city_group']=='Cotia')])
   # Para cada combinação de índices:
   for i in range(len(combinacoes)):
 
