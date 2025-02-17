@@ -843,7 +843,7 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
                     try:
                         merged_df.drop(col, axis=1, inplace=True)
                     except:
-                        raise DataFrameError("An error occurred with the following DataFrame:", df_keys_not_found_2.columns.values, starting_df_keys_not_found_2.columns.values, shared_key_columns)
+                        print("An error occurred with the following DataFrame:", df_keys_not_found_2.columns.values, starting_df_keys_not_found_2.columns.values, shared_key_columns)
 
             # Separate found and not found keys
             found_keys = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
