@@ -822,6 +822,9 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
       df_keys_not_found_1 = merge_unique_keys.loc[merge_unique_keys['aux_x'].isnull()][shared_key_columns]
       df_keys_not_found_2 = merge_unique_keys.loc[merge_unique_keys['aux_y'].isnull()][shared_key_columns]
 
+      print("**********************************************************")
+      print(df_keys_not_found_2.columns.values)
+
     # Make a copy of the original df_keys_not_found_2
     original_df_keys_not_found_2 = df_keys_not_found_2.copy()
     original_shared_key_columns = shared_key_columns.copy()
@@ -836,14 +839,14 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
             # Merge to find the combinations that exist in df_2
             merged_df = df_keys_not_found_2.merge(df_2, on=shared_key_columns, how='left', indicator=True)
 
+            print("¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨")
+        	  print(df_keys_not_found_2.columns.values)
             # Replace the reference key column values in found_keys with the original not found key
             merged_df = merged_df.merge(starting_df_keys_not_found_2, on=list(set(shared_key_columns)-set([reference_key_column])), how='left',suffixes=('_x', ''))
             for col in merged_df.columns.values:
                 if "_x" in col:
-                    try:
-                        merged_df.drop(col, axis=1, inplace=True)
-                    except:
-                        print("An error occurred with the following DataFrame:", df_keys_not_found_2.columns.values, starting_df_keys_not_found_2.columns.values, shared_key_columns)
+                  merged_df.drop(col, axis=1, inplace=True)
+
 
             # Separate found and not found keys
             found_keys = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
