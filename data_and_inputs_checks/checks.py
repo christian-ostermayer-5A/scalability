@@ -1183,7 +1183,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
   '''
   # Verificamos se estamos realmente no ambiente de planning:
   #---------------------------------------------------------------------------------------------------
-  if tipo_de_tof == 'Sem Tipo':
+  if tipo_de_tof == 'Sem Tipo' and len(lista_colunas_de_valores) > 0:
 
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,2]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
@@ -1201,7 +1201,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     
     elif erro > 0:
       mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF mas não foram encontradas no baseline e remover as aberturas do baseline que não existem no ToF.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
-
+    
       try:
         df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[2], 
