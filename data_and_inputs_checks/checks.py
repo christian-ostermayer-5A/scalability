@@ -1268,7 +1268,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
         lista_df_atualizada[1] = output
         lista_df[1] = output
         
-        mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida. '+str(len_original)+' --> '+str(len(output))+' = '+str(len(lista_df_atualizada[2])),'green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
+        mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida. '+str(len_original)+' --> '+str(len(output))+' = '+str(len(lista_df_atualizada[1])),'green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
         
       except:
         mensagem = mensagem + '\n\n'+colored('Houve um erro na tentativa de executar a função "alocate_not_found_keys".','red')
@@ -1277,6 +1277,9 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
 
 
   erro = 0
+  print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+  print(len(lista_df_atualizada[1])
+  print(lista_df_atualizada[1].loc[lista_df_atualizada[1]['planning_operation']=='Capta Aí'])
   erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = combinacoes,
                                                                       lista_df_atualizada = lista_df_atualizada,
                                                                       lista_aberturas = lista_aberturas,
