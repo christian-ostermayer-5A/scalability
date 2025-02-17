@@ -1219,26 +1219,19 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
       mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF mas não foram encontradas no baseline e remover as aberturas do baseline que não existem no ToF.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
     
       try:
-        df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
+        output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[2], 
                                       shared_key_columns = aberturas_compartilhadas, 
                                       value_columns_2 = lista_colunas_de_valores[2], 
                                       reference_key_column='city_group', 
                                       reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
         
-        lista_df_atualizada[2] = df_2
-        lista_df[2] = df_2
+        lista_df_atualizada[2] = output
+        lista_df[2] = output
         
         mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida.','green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
         
       except:
-        df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
-                                    df_2 = lista_df_atualizada[2], 
-                                    shared_key_columns = aberturas_compartilhadas, 
-                                    value_columns_2 = lista_colunas_de_valores[2], 
-                                    reference_key_column='city_group', 
-                                    reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
-        
         mensagem = mensagem + '\n\n'+colored('Houve um erro na tentativa de executar a função "alocate_not_found_keys".','red')
 
     #--------------------------------------------------------------------------------------------------------
@@ -1265,15 +1258,15 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
       mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF Mensal mas não foram encontradas no ToF Semanal e remover as aberturas do ToF Semanal que não existem no ToF Mensal.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
     
       try:
-        df_2 = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
+        output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[1], 
                                       shared_key_columns = aberturas_compartilhadas, 
                                       value_columns_2 = lista_colunas_de_valores[1], 
                                       reference_key_column='city_group', 
                                       reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
         
-        lista_df_atualizada[1] = df_2
-        lista_df[1] = df_2
+        lista_df_atualizada[1] = output
+        lista_df[1] = output
         
         mensagem = mensagem + '\n\n'+colored('A execução da função "alocate_not_found_keys" foi bem-sucedida.','green')+'\n\nSerá feito um novo check de combinação de aberturas, agora, com todas as bases.'
         
