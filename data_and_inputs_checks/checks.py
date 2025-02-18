@@ -1218,6 +1218,8 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     
       try:
         original_column_order = lista_df_atualizada[2].columns.values
+        print("################################################")
+        print(original_column_order)
         original_name = lista_df_atualizada[2].name
         output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[2], 
