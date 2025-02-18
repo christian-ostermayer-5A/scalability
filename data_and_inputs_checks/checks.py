@@ -964,7 +964,6 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
 
 def retorna_compatibilidade_chaves(combinacoes,
                                    lista_df_atualizada,
-                                   lista_aberturas,
                                    aberturas_compartilhadas,
                                    chaves_ignoradas,
                                    lista_comparacao_a_mais_atualizada,
@@ -975,9 +974,7 @@ def retorna_compatibilidade_chaves(combinacoes,
 
   # Vamos iniciar uma flag que aponta um erro crítico, que não pode ser contornado via realocação de chaves
   flag_erro_chaves_inexistentes = False
-  print("#######################################################")
-  print(len(lista_df_atualizada[1]))
-  print(lista_df_atualizada[1].loc[(lista_df_atualizada[1]['planning_operation']=='Capta Aí') & (lista_df_atualizada[1]['city_group']=='Cotia')])
+
   # Para cada combinação de índices:
   for i in range(len(combinacoes)):
 
@@ -987,8 +984,14 @@ def retorna_compatibilidade_chaves(combinacoes,
     nome_df_1 = lista_df_atualizada[indice_1].name
     nome_df_2 = lista_df_atualizada[indice_2].name
 
-    aberturas_1 = lista_aberturas[indice_1]
-    aberturas_2 = lista_aberturas[indice_2]
+    aberturas_1 = lista_df_atualizada[indice_1][aberturas_compartilhadas]
+    aberturas_2 = lista_df_atualizada[indice_2][aberturas_compartilhadas]
+
+    aberturas_1['aux'] = 1
+    aberturas_2['aux'] = 1
+
+    aberturas_1 = aberturas_1.groupby(aberturas_compartilhadas).sum().reset_index()[aberturas_compartilhadas]
+    aberturas_2 = aberturas_2.groupby(aberturas_compartilhadas).sum().reset_index()[aberturas_compartilhadas]
 
     nome_do_arquivo_1 = nome_do_arquivo[indice_1]
     nome_do_arquivo_2 = nome_do_arquivo[indice_2]
@@ -1205,7 +1208,6 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
 
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,2]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
-                                                                                lista_aberturas = lista_aberturas,
                                                                                 aberturas_compartilhadas = aberturas_compartilhadas,
                                                                                 chaves_ignoradas = chaves_ignoradas,
                                                                                 lista_comparacao_a_mais_atualizada = lista_comparacao_a_mais_atualizada,
@@ -1241,12 +1243,9 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     Vamos testar agora o ToF Mensal e Semanal e criar as aberturas no ToF Semanal se necessário:
     '''
     erro = 0
-    print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-    print(len(lista_df_atualizada[1]))
-    print(lista_df_atualizada[1].loc[(lista_df_atualizada[1]['planning_operation']=='Capta Aí') & (lista_df_atualizada[1]['city_group']=='Cotia')])
+
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,1]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
-                                                                                lista_aberturas = lista_aberturas,
                                                                                 aberturas_compartilhadas = aberturas_compartilhadas,
                                                                                 chaves_ignoradas = chaves_ignoradas,
                                                                                 lista_comparacao_a_mais_atualizada = lista_comparacao_a_mais_atualizada,
@@ -1281,12 +1280,8 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
 
 
   erro = 0
-  print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-  print(len(lista_df_atualizada[1]))
-  print(lista_df_atualizada[1].loc[(lista_df_atualizada[1]['planning_operation']=='Capta Aí') & (lista_df_atualizada[1]['city_group']=='Cotia')])
   erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = combinacoes,
                                                                       lista_df_atualizada = lista_df_atualizada,
-                                                                      lista_aberturas = lista_aberturas,
                                                                       aberturas_compartilhadas = aberturas_compartilhadas,
                                                                       chaves_ignoradas = chaves_ignoradas,
                                                                       lista_comparacao_a_mais_atualizada = lista_comparacao_a_mais_atualizada,
