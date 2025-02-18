@@ -1218,6 +1218,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     
       try:
         original_column_order = lista_df_atualizada[2].columns.values
+        original_name = lista_df_atualizada[2].name
         output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[2], 
                                       shared_key_columns = aberturas_compartilhadas, 
@@ -1225,6 +1226,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                                       reference_key_column='city_group', 
                                       reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
         output = output[original_column_order]
+        output.name = original_name
         len_original = len(lista_df_atualizada[2])
         lista_df_atualizada[2] = output
         lista_df[2] = output
@@ -1258,6 +1260,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     
       try:
         original_column_order = lista_df_atualizada[1].columns.values
+        original_name = lista_df_atualizada[1].name
         output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[1], 
                                       shared_key_columns = aberturas_compartilhadas, 
@@ -1265,6 +1268,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                                       reference_key_column='city_group', 
                                       reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
         output = output[original_column_order]
+        output.name = original_name
         len_original = len(lista_df_atualizada[1])
         lista_df_atualizada[1] = output
         lista_df[1] = output
