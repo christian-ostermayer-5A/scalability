@@ -1199,7 +1199,11 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
   # Verificamos se estamos realmente no ambiente de planning:
   #---------------------------------------------------------------------------------------------------
   if (tipo_de_tof == 'Sem Tipo' or tipo_de_tof == '') and len(lista_colunas_de_valores) > 0:
-
+    
+    original_baseline_column_order = lista_df_atualizada[2].columns.values
+    print("################################################")
+    print(original_baseline_column_order)
+    
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,2]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
                                                                                 aberturas_compartilhadas = aberturas_compartilhadas,
@@ -1217,9 +1221,6 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
       mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF mas não foram encontradas no baseline e remover as aberturas do baseline que não existem no ToF.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
     
       try:
-        original_column_order = lista_df_atualizada[2].columns.values
-        print("################################################")
-        print(original_column_order)
         original_name = lista_df_atualizada[2].name
         output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[2], 
@@ -1227,7 +1228,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                                       value_columns_2 = lista_colunas_de_valores[2], 
                                       reference_key_column='city_group', 
                                       reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
-        output = output[original_column_order]
+        output = output[original_baseline_column_order]
         output.name = original_name
         len_original = len(lista_df_atualizada[2])
         lista_df_atualizada[2] = output
@@ -1242,8 +1243,12 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     '''
     Vamos testar agora o ToF Mensal e Semanal e criar as aberturas no ToF Semanal se necessário:
     '''
+    
+    original_tof_column_order = lista_df_atualizada[1].columns.values
+    print("################################################")
+    print(original_tof_column_order)
+    
     erro = 0
-
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,1]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
                                                                                 aberturas_compartilhadas = aberturas_compartilhadas,
@@ -1261,7 +1266,6 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
       mensagem = mensagem + '\n\nSerá realizada uma tentativa de adicionar a combinação de aberturas que existem no ToF Mensal mas não foram encontradas no ToF Semanal e remover as aberturas do ToF Semanal que não existem no ToF Mensal.\n\nEsta operação é realizada pela função '+colored('"alocate_not_found_keys"','blue')+' e leva em consideração uma série de premissas grosseiras, envolvendo a ordem de declaração das aberturas do funil. Se for bem-sucedida, não será retornado um erro, mas é importante verificar se as combinações a serem criadas realmente deveriam existir.'
     
       try:
-        original_column_order = lista_df_atualizada[1].columns.values
         original_name = lista_df_atualizada[1].name
         output = alocate_not_found_keys(df_1 = lista_df_atualizada[0],
                                       df_2 = lista_df_atualizada[1], 
@@ -1269,7 +1273,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                                       value_columns_2 = lista_colunas_de_valores[1], 
                                       reference_key_column='city_group', 
                                       reference_keys=['RMSP','Rio de Janeiro','Belo Horizonte'])
-        output = output[original_column_order]
+        output = output[original_tof_column_order]
         output.name = original_name
         len_original = len(lista_df_atualizada[1])
         lista_df_atualizada[1] = output
