@@ -1079,7 +1079,15 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                  lista_comparacao_a_mais = [],
                  tipo_de_tof = 'Sem Tipo'):     
   
+  original_baseline_column_order = lista_df[2].columns.values
+  print("################################################")
+  print(original_baseline_column_order)
+  
+  original_tof_column_order = lista_df[1].columns.values
+  print("################################################")
+  print(original_tof_column_order)
 
+                   
   # Definições iniciais
   #-------------------------------------------------------------------------------------------------
   mensagem = ''
@@ -1199,10 +1207,7 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
   # Verificamos se estamos realmente no ambiente de planning:
   #---------------------------------------------------------------------------------------------------
   if (tipo_de_tof == 'Sem Tipo' or tipo_de_tof == '') and len(lista_colunas_de_valores) > 0:
-    
-    original_baseline_column_order = lista_df_atualizada[2].columns.values
-    print("################################################")
-    print(original_baseline_column_order)
+
     
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,2]],
                                                                                 lista_df_atualizada = lista_df_atualizada,
@@ -1244,9 +1249,6 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
     Vamos testar agora o ToF Mensal e Semanal e criar as aberturas no ToF Semanal se necessário:
     '''
     
-    original_tof_column_order = lista_df_atualizada[1].columns.values
-    print("################################################")
-    print(original_tof_column_order)
     
     erro = 0
     erro,mensagem,flag_erro_chaves_inexistentes = retorna_compatibilidade_chaves(combinacoes = [[0,1]],
