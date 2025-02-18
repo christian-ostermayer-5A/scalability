@@ -2665,7 +2665,7 @@ def check_building_blocks(base_tof_semanal,
   erro_bb = 0
 
   # Primeiro, vamos comparar as aberturas entre as bases de ToF e inputs incluindo a coluna de building blocks tof:
-
+  print(base_tof_semanal.loc[(base_tof_semanal['city_group'] == 'Cotia') & (base_tof_semanal['planning_operation'] == 'Capta Aí')]
   lista_df_tofs,mensagem_bb,erro_bb = check_chaves(lista_df = [base_tof_mensal,base_tof_semanal,base_inputs],                   # lista de DataFrames já devem ter as colunas de valores formatadas
                                                         aberturas_compartilhadas = ['building block tof']+aberturas,   # lista com as aberturas que devem estar presentes em todas as bases da lista de dataframes
                                                         aberturas_especificas = [coluna_de_semanas,'mês','ano']+['building block cohort','Conversão','Aplicação','Etapa'],      # lista com as aberturas que não precisam estar presentes em todas as bases
