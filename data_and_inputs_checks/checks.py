@@ -2511,6 +2511,7 @@ def check_geral(lista_de_bases,                 # Lista de bases que vamos verif
       if lista_de_bases_checar_chaves[i]:
         lista_de_bases[i] = lista_de_bases_chaves[j]
         j+=1
+      print("¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨")
       print(lista_de_bases[i].columns.values)
 
   # Vamos verificar a formatação das datas.
