@@ -848,7 +848,8 @@ def alocate_not_found_keys(df_1, df_2, shared_key_columns, value_columns_2, refe
       # Separate found and not found keys
       found_keys = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
       not_found_keys = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
-      
+      print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+      print(found_keys)
 
       # Add found keys to df_2
       if len(found_keys) > 0:
