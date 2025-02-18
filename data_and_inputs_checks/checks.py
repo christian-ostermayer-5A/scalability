@@ -1078,14 +1078,17 @@ def check_chaves(lista_df,                   # lista de DataFrames já devem ter
                  lista_colunas_de_valores,  # Usada somente no caso específico da alocação de aberturas entre baseline cohort e tof no planning
                  lista_comparacao_a_mais = [],
                  tipo_de_tof = 'Sem Tipo'):     
-  
-  original_baseline_column_order = lista_df[2].columns.values
-  print("################################################")
-  print(original_baseline_column_order)
-  
-  original_tof_column_order = lista_df[1].columns.values
-  print("################################################")
-  print(original_tof_column_order)
+
+  if len(lista_df)>2:
+    original_baseline_column_order = lista_df[2].columns.values
+  else:
+    original_baseline_column_order = []
+
+  if len(lista_df)>1:
+    original_tof_column_order = lista_df[1].columns.values
+  else:
+    original_tof_column_order = []
+
 
                    
   # Definições iniciais
