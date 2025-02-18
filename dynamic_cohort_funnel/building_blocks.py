@@ -116,11 +116,7 @@ def building_blocks(inputs_df,
                                                         dict_grupos = dict_grupos,
                                                         nome_coluna_week_origin = nome_coluna_week_origin,
                                                         coluna_de_semanas = coluna_de_semanas)
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    print(nome_coluna_week_origin)
-    print(base_cohort.columns.values)
-    print(baseline_cohort.columns.values)
-    print(inputs_df.columns.values)
+
     base_cohort = ajusta_teto_cohort(df_cohort = base_cohort,
                                      nome_coluna_week_origin = nome_coluna_week_origin)
 
