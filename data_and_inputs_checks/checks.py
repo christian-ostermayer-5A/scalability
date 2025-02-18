@@ -2505,14 +2505,12 @@ def check_geral(lista_de_bases,                 # Lista de bases que vamos verif
       flag_erro_chaves = True
 
     # Como a função check chaves pode aletar as bases, vamos atualizar a lista_df:
-
+    j = 0
     for i in range(len(lista_de_bases_checar_chaves)):
-      j = 0
       if lista_de_bases_checar_chaves[i]:
         lista_de_bases[i] = lista_de_bases_chaves[j]
         j+=1
-      print("¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨")
-      print(lista_de_bases[i].columns.values)
+
 
   # Vamos verificar a formatação das datas.
   #___________________________________________________________________________________________________
