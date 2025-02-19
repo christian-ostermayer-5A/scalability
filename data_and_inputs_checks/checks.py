@@ -2024,7 +2024,7 @@ def check_feriados(df_feriados,
 
 # @title Def verifica_baseline_100% 
 
-def process_conversions_above_100(df, key_columns, value_columns, conversion_column='conversion'):
+def process_conversions_above_100(df, key_columns, value_columns, conversion_column='week origin'):
     # Exclude rows where the conversion column is equal to "coincident"
     df_filtered = df[df[conversion_column] != 'coincident']
     
@@ -2089,10 +2089,13 @@ def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoe
     #contagem_de_erros += 1
 
     # Caso exista erro, vamos tentar redistribuir as conversões que passaram de 100%.
+    '''
     df_baseline = process_conversions_above_100(df = df_baseline, 
                                                 key_columns = lista_chaves, 
-                                                value_columns = colunas_conversoes)
-
+                                                value_columns = colunas_conversoes,
+                                                conversion_column = coluna_idx_cohort)
+    '''
+    mensagem = mensagem + '\n\n'+colored('Não foi realizada a correção','red')
     #------------------
     # Realizamos o check das conversões novamente:
 
