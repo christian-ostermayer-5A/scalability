@@ -1,4 +1,6 @@
 #@title Def adiciona_feriados
+import pandas as pd
+from strip_accents import strip_accents
 
 
 def adiciona_feriados(df,           # DataFrame com os dados semanais onde queremos adicionar uma coluna de feriados

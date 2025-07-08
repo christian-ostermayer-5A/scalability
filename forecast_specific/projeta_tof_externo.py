@@ -1,6 +1,7 @@
 #@title Def projeta_tof_externo
-
-
+import numpy as np
+import pandas as pd
+from contencao_de_danos import contencao_de_danos
 
 def projeta_tof_externo(df_completo, # base completa sem estar filtrada
                         df_ToF_externo,

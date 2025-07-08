@@ -1,4 +1,6 @@
 #@title Def gerador_baseline
+import pandas as pd
+import numpy as np
 
 def gerador_baseline(forcast_cohort,
                      inputs_substituicao_df,

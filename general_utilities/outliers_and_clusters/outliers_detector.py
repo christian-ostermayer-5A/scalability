@@ -200,7 +200,6 @@ def remove_ouliers(df,endogenous,exogenous,outlierIndexes):
     if len(df_sem_outlier_copy.loc[df_sem_outlier_copy['s__0'].isnull(),[endogenous]+exogenous]) < len(df_sem_outlier[[endogenous]+exogenous]):
       df_sem_outlier = df_sem_outlier_copy
 
-
   return df_sem_outlier
 
 #_________________________________________________________________________________________________

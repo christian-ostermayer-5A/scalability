@@ -1,5 +1,5 @@
 #@title Def forcast_diario
-
+import pandas as pd
 
 def forcast_diario(df_out_forecast,
                   df_share_diario,

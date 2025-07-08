@@ -3,6 +3,10 @@ import timeit
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
+from outliers_detector import *
+from transforma_exogs_2 import transforma_exogs_2
+from parametros_modelo import parametros_modelo
+from transforma_dummy import transforma_dummy
 '''
 Descrição Geral:
 

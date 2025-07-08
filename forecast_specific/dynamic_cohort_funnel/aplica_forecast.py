@@ -1,5 +1,12 @@
 #@title Def aplica_forecast (fdf 1)
 import timeit
+import pandas as pd
+import numpy as np
+from clear___output import *
+from colored import colored
+from remove_historico_zerado import remove_historico_zerado
+from tempo_maturacao import *
+from forecast_2 import *
 '''
 Descrição Geral:
 

@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from datetime import timedelta
+from data_import import *
+from data_export import *
+from checks import *
 '''
 alterados:
 
@@ -27,8 +30,10 @@ def gerador_base_exogenas(base_modelo,
                           qtd_semanas,
                           data_inicio_historico,
                           data_fim_historico,
-                          data_fim_forecast):
+                          data_fim_forecast,
+                         client = 'client'):
 
+                       
   if not utilizar_anterior:
 
     mensagem = ''
@@ -71,8 +76,9 @@ def gerador_base_exogenas(base_modelo,
                                                         colunas_para_dropar = [],       # lista de listas de inteiros, indicando a posição das colunas a serem excluídas de cada base (lista vazia caso nenhuma coluna a ser excluída)
                                                         lista_obrigatoria = lista_obrigatoria,         # lista de booleanos indicando se a existência daquela base é obrigatória
                                                         nome_do_painel_de_controle = nome_do_arquivo,           # string com o nome do arquivo sheets onde se encontra o painel de controle (somente para imprimir mensagens de erro)
-                                                        sheets_painel_de_controle = [])           # arquivo sheets do painel de controle aberto
-
+                                                        sheets_painel_de_controle = [],
+                                                        client = client)           # arquivo sheets do painel de controle aberto
+      
     else:
       flag_abriu = False
 
@@ -82,7 +88,7 @@ def gerador_base_exogenas(base_modelo,
       #-----------------------------------------------------------------------------------------------
 
       # Geramos a lista de vases que serão verificadas
-      lista_de_bases_check = lista_de_bases_exo#+[base_modelo_copy]
+      lista_de_bases_check = lista_de_bases_exo.copy()#+[base_modelo_copy]
 
       # Registramos o nome das colunas originais para substituir depois,
       # pois os checks transformam tudo em minúsculo:
@@ -182,11 +188,10 @@ def gerador_base_exogenas(base_modelo,
           semana = semana - pd.Timedelta(6, unit='D') # date_range gera lista de domingos
           aux = aberturas_modelo.copy()
           aux[col_data_base_modelo] = semana
-          lista_base_modelo_final = lista_base_modelo_final
-        base_modelo_final = pd.concat([base_modelo_final,aux])
+          lista_base_modelo_final = lista_base_modelo_final + [aux]
+        base_modelo_final = pd.concat(lista_base_modelo_final)
 
         base_modelo_final[col_data_base_modelo] = pd.to_datetime(base_modelo_final[col_data_base_modelo], infer_datetime_format=True)
-
 
 
         # Agora, para cada base exogena, vamos tratá-la e adicioná-la à base modelo:
@@ -196,12 +201,13 @@ def gerador_base_exogenas(base_modelo,
 
         for b in range(len(lista_de_bases_check)):
 
+          # Precisamos formatar novamente as colunas pois não utilizamos as bases que saem dos checks, pois elas estão com as colunas trocadas ou modificadas
           base_exo = lista_de_bases_exo[b]
-          #lista_de_lista_col_valores[b] = [c.lower() for c in lista_de_lista_col_valores[b]]
-          #lista_lista_colunas_datas[b] = [c.lower() for c in lista_lista_colunas_datas[b]]
-
-          #base_exo[lista_lista_colunas_datas[b]] = pd.to_datetime(base_exo[lista_lista_colunas_datas[b]], infer_datetime_format=True)
-          #base_exo[lista_de_lista_col_valores[b]] = base_exo[lista_de_lista_col_valores[b]].astype(float)
+          for d in lista_lista_colunas_datas[b]:
+            base_exo[d] = pd.to_datetime(base_exo[d], infer_datetime_format=True)
+          for v in lista_de_lista_col_valores[b]:
+            base_exo[v] = base_exo[v].replace('','0')
+            base_exo[v] = base_exo[v].astype(float)
 
           # Renomeamos as colunas das bases conforme os nomes originais:
           base_exo.columns = colunas_originais[b]
@@ -237,7 +243,6 @@ def gerador_base_exogenas(base_modelo,
             # Criamos uma base de de-para com os dias e as datas correspondentes da base:
             data_max = base_exo[lista_lista_colunas_datas[b]].values.max()
             data_min = base_exo[lista_lista_colunas_datas[b]].values.min()
-
 
             primeira_segunda = data_min - pd.Timedelta(pd.to_datetime(str(data_min)).weekday(), unit='D')
             if pd.to_datetime(str(data_max)).weekday() != 6:
@@ -451,7 +456,6 @@ def gerador_base_exogenas(base_modelo,
                 if len(lista_exo_original) >= 3:
                   lista_exo[lista_exo.index(nome_exo_novo)] = nome_exo_novo+'_z'
                   base_modelo_final = base_modelo_final.rename(columns={nome_exo_novo:nome_exo_novo+'_z'})
-
               else:
                 nome_exo_novo = '_&_'.join(nomes_desduplicados)
 
@@ -463,7 +467,6 @@ def gerador_base_exogenas(base_modelo,
                 base_modelo_final_filtrada = base_modelo_final[base_modelo_final[col].notnull()]
                 data_max = base_modelo_final_filtrada[col_data_base_modelo].values.max()
                 data_min = base_modelo_final_filtrada[col_data_base_modelo].values.min()
-
                 datas_max_min = datas_max_min + [[col,data_max,data_min]]
 
               df_datas_max_min = pd.DataFrame(datas_max_min,
@@ -485,13 +488,11 @@ def gerador_base_exogenas(base_modelo,
 
                   exo_hist = exo_inicial
                   base_modelo_final[nome_exo_novo] = base_modelo_final[exo_inicial].values
-
                 else:
 
                   data_limite = df_datas_max_min.loc[df_datas_max_min['exo'] != exo_inicial,['data_max']].values.min()
                   exo = df_datas_max_min.loc[(df_datas_max_min['data_max'] == data_limite) & (df_datas_max_min['exo'] != exo_inicial),['exo']].values[0][0]
                   base_modelo_final.loc[base_modelo_final[col_data_base_modelo] > data_limite_inicial,[nome_exo_novo]] = base_modelo_final.loc[base_modelo_final[col_data_base_modelo] > data_limite_inicial,[exo]].values
-
                   data_limite_inicial = data_limite
                   exo_inicial = exo
 
@@ -505,10 +506,8 @@ def gerador_base_exogenas(base_modelo,
                 data_menor = datas_menores.min()
                 exo_menor = df_datas_max_min.loc[df_datas_max_min['data_min'] == data_menor,['exo']].values[0][0]
                 base_modelo_final.loc[base_modelo_final[col_data_base_modelo] < data_hist,[nome_exo_novo]] = base_modelo_final.loc[base_modelo_final[col_data_base_modelo] < data_hist,[exo_menor]].values
-
               # Removemos as colunas antigas que estavam separadas
               base_modelo_final = base_modelo_final.drop(columns = lista_exo)
-
 
 
 
@@ -600,7 +599,6 @@ def gerador_base_exogenas(base_modelo,
         base_modelo_final_concat = pd.concat(lista_base_modelo_final_concat)
         base_modelo_final = base_modelo_final_concat
         base_modelo_final = base_modelo_final.fillna(0)
-
     else:
         # Vamos criar uma base de exógenas modelo, com todas as chaves e todas as semanas de histórico
         # e forecast:
@@ -616,9 +614,7 @@ def gerador_base_exogenas(base_modelo,
           aux = aberturas_modelo.copy()
           aux[col_data_base_modelo] = semana
           base_modelo_final = pd.concat([base_modelo_final,aux])
-
         base_modelo_final[col_data_base_modelo] = pd.to_datetime(base_modelo_final[col_data_base_modelo], infer_datetime_format=True)
-
 
   return base_modelo_final,mensagem
 

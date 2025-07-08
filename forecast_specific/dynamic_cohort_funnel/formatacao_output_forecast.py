@@ -1,5 +1,5 @@
 #@title Def formatacao_output_forecast
-
+import pandas as pd
 
 # Retorna a base final no formato de base única, com volume e cohort
 def formatacao_output_forecast(base,etapas_coh,etapas_vol,chaves,col_data):

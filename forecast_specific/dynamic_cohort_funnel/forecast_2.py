@@ -1,5 +1,7 @@
 #@title Def forecast_2 (fdf 2)
-
+import pandas as pd
+import numpy as np
+from Auxiliar_Forecast import *
 '''
 Descrição Geral:
 
@@ -122,7 +124,8 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
                                                                                                                                   limite_delta_vol = limite_delta_vol,
                                                                                                                                   limite_delta_share = limite_delta_share,
                                                                                                                                   limite_delta_aberta = limite_delta_aberta,
-                                                                                                                                fit_intercept = fit_intercept)
+                                                                                                                                fit_intercept = fit_intercept,
+                                                                                                                               limite_proj = limite_proj)
 
     # Atualizamos as bases periféricas:
     base_contencao_de_danos = pd.concat([base_contencao_de_danos,base_contencao_de_danos_local])
@@ -167,6 +170,7 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
 
     # Realizamos a projeção
     if tipo_de_projecao != 'Cluster':
+
       df_completo_projetado,out_parametros_c,matriz_forecast_c,base_outliers_local,base_contencao_de_danos_local =  Auxiliar_Forecast(df_completo = df_completo_projetado, # DF filtrado somente a abertura e Endog, ordenado com a data mais antiga no topo
                                                                                                                                       df_inputs_exogenas = df_inputs_exogenas,
                                                                                                                                       df_parametros = df_parametros,
@@ -190,8 +194,10 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
                                                                                                                                         limite_delta_vol = limite_delta_vol,
                                                                                                                                         limite_delta_share = limite_delta_share,
                                                                                                                                         limite_delta_aberta = limite_delta_aberta,
-                                                                                                                                      fit_intercept = fit_intercept)
+                                                                                                                                      fit_intercept = fit_intercept,
+                                                                                                                                     limite_proj = limite_proj)
 
+      
       # Atualizamos as bases periféricas:
       base_contencao_de_danos = pd.concat([base_contencao_de_danos,base_contencao_de_danos_local])
       base_outliers = pd.concat([base_outliers,base_outliers_local])
@@ -243,7 +249,8 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
                                                                                                                                       limite_delta_vol = limite_delta_vol,
                                                                                                                                       limite_delta_share = limite_delta_share,
                                                                                                                                       limite_delta_aberta = limite_delta_aberta,
-                                                                                                                                    fit_intercept = fit_intercept)
+                                                                                                                                    fit_intercept = fit_intercept,
+                                                                                                                                   limite_proj = limite_proj)
 
     # Atualizamos as bases periféricas:
     base_contencao_de_danos = pd.concat([base_contencao_de_danos,base_contencao_de_danos_local])
@@ -264,7 +271,7 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
 
   # Vamos selecionar o hisórico não maturado a partir da base completa
   df_nao_maturado_projetado = df_completo_projetado.loc[(df_completo_projetado[col_data] > data_maturacao) & (df_completo_projetado[col_data] < primeira_data_forecast)]
-  #print(data_maturacao,primeira_data_forecast)
+  df_maturado_projetado = df_completo_projetado.loc[(df_completo_projetado[col_data] <= data_maturacao) & (df_completo_projetado[col_data] >= data_maturacao - np.timedelta64(qtd_semanas_media*7,'D'))]
   # Caso a abretura mature na W0, não vai existir histórico não maturado. Nesse caso não precisamos
   # projetar o histórico não maturado e ir direto para a projeção da cohort aberta considerando o
   # histórico realizado completo:
@@ -309,19 +316,32 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       lista_cohorts_projetadas = lista_cohorts_projetadas+["%__"+str(max_origin)]
       #lista_cohorts_projetadas = lista_cohorts_projetadas+["%__Coincident"]
 
+      # Selecionamos apenas a semana a ser calculada
+      historico_nao_maturado_semana = df_nao_maturado_projetado.loc[df_nao_maturado_projetado['week_number'] == i+1]
 
       # Identificamos qual cohort cuja projeção do share vai ser utilizada no cálculo da cohort aberta
       share_p_ca = "s__"+str(i)
 
-
-      # Selecionamos apenas a semana a ser calculada
-      historico_nao_maturado_semana = df_nao_maturado_projetado.loc[df_nao_maturado_projetado['week_number'] == i+1]
+      # Calculamos qual o peso acumulado do share das fechadas dentro da aberta naquela semana
+      if i == 0:
+        share_acumulado = historico_nao_maturado_semana["s__0"].values
+      else:
+        share_acumulado = 0
+      for s in range(i):
+        if s == 0:
+          share_acumulado = historico_nao_maturado_semana["s__0"].values
+        else:
+          share_acumulado = share_acumulado + (1-share_acumulado)*historico_nao_maturado_semana["s__"+str(s)].values
 
       #---------------------------------------------------------------------------------------------
 
       # Aplicamos a equação que determina a cohort aberta a partir da projeção dos shares e das cohorts
       # já maturadas:
       # CA(w) = W(w-1) / s_(w-1) + [sum(W) from W0 to W(w-2)]
+      # Melhoria: vamos ponderar a projeção da aberta pelo peso que as fechadas maturadas tem dentro dela e usar a média da cohort aberta maturada como parâmetro:
+      # CA(w) = {W(w-1) / s_(w-1) + [sum(W) from W0 to W(w-2)]}*share_acumulado + CA(média maturada)*(1-share_acumulado)
+
+      CA_media_maturada = projeta_por_media(df_maturado_projetado,'%__Volume Aberta',1,qtd_semanas_media)
 
       # Não vamos considerar o share da cohort Coincident para calcular a cohort aberta. Precisamos
       # somente da última cohort para isso
@@ -329,24 +349,35 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       # Caso o share da cohort seja zero, precisamos calcular com base na W0 somente
       if sum(historico_nao_maturado_semana[share_p_ca].values) == 0 and sum(historico_nao_maturado_semana["s__0"].values) != 0:
         # Calculamos a cohort aberta dessa semana
-        historico_nao_maturado_semana['%__Volume Aberta'] = historico_nao_maturado_semana["%__0"].values \
-                                                            / historico_nao_maturado_semana["s__0"].values
+        CA_pelo_share_w0 = historico_nao_maturado_semana["%__0"].values / historico_nao_maturado_semana["s__0"].values
+        CA_ponderada = CA_pelo_share_w0 * share_acumulado + CA_media_maturada * (1-share_acumulado)
+        # Caso a cohort aberta ponderada seja menor do que a w0 já realizada, vamos pela primeira opção:
+        if CA_ponderada < historico_nao_maturado_semana["%__0"].values:
+          historico_nao_maturado_semana['%__Volume Aberta'] = CA_pelo_share_w0
+        else:
+          historico_nao_maturado_semana['%__Volume Aberta'] = CA_ponderada
 
 
       elif sum(historico_nao_maturado_semana[share_p_ca].values) == 0 and sum(historico_nao_maturado_semana["s__0"].values) == 0:
-        historico_nao_maturado_semana['%__Volume Aberta'] = projeta_por_media(df_completo_projetado,'%__Volume Aberta',1,qtd_semanas_media)
+        historico_nao_maturado_semana['%__Volume Aberta'] = projeta_por_media(df_maturado_projetado,'%__Volume Aberta',1,qtd_semanas_media)
 
       else:
         # Calculamos a cohort aberta dessa semana
 
         cohort_parcial_maturada = np.sum(historico_nao_maturado_semana[lista_cohorts_maturadas[:-1]].values)
 
+        cohort_total = np.sum(historico_nao_maturado_semana[lista_cohorts_maturadas].values)
+
         cohort_faltante_projetada = historico_nao_maturado_semana[lista_cohorts_maturadas[-1]].values \
                                   / historico_nao_maturado_semana[share_p_ca].values
 
-        cohort_aberta_pela_w0 = historico_nao_maturado_semana["%__0"].values / historico_nao_maturado_semana["s__0"].values
-
-        historico_nao_maturado_semana['%__Volume Aberta'] = cohort_faltante_projetada + cohort_parcial_maturada
+        CA_pelo_share = cohort_faltante_projetada + cohort_parcial_maturada
+        CA_ponderada = CA_pelo_share * share_acumulado + CA_media_maturada * (1-share_acumulado)
+        # Se a cohort aberta ponderada for menor do que as cohorts que já maturaram, vamos pela primeira opção:
+        if CA_ponderada < cohort_total:
+          historico_nao_maturado_semana['%__Volume Aberta'] = CA_pelo_share
+        else:
+          historico_nao_maturado_semana['%__Volume Aberta'] = CA_ponderada
 
       '''
       print('____________________calculo aberta_______________')
@@ -365,8 +396,6 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       # projeções muito divergentes da média:
       #---------------------------------------------------------------------------------------------
 
-      # Vamos selecionar o hisórico maturado maturado a partir da base completa
-      df_maturado_projetado = df_completo_projetado.loc[(df_completo_projetado[col_data] <= data_maturacao) & (df_completo_projetado[col_data] >= data_maturacao - np.timedelta64(qtd_semanas_media*7,'D'))]
       cohort_aberta_media = df_maturado_projetado['%__Volume Aberta'].mean()
       cohort_aberta_std = df_maturado_projetado['%__Volume Aberta'].std()
 
@@ -378,8 +407,8 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       if cohort_aberta_projetada_original < cohort_aberta_media-limite_delta_aberta*cohort_aberta_std:
         historico_nao_maturado_semana['%__Volume Aberta'] = cohort_aberta_media-limite_delta_aberta*cohort_aberta_std
 
-      if cohort_aberta_projetada_original > 1:
-        historico_nao_maturado_semana['%__Volume Aberta'] = 1.
+      if cohort_aberta_projetada_original > limite_proj:
+        historico_nao_maturado_semana['%__Volume Aberta'] = limite_proj
 
       if cohort_aberta_projetada_original < 0:
         historico_nao_maturado_semana['%__Volume Aberta'] = 0.
@@ -488,6 +517,7 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
 
   # Realizamos a projeção
   if tipo_de_projecao != 'Cluster':
+
     df_completo_projetado,out_parametros_a,matriz_forecast_a,base_outliers_local,base_contencao_de_danos_local =  Auxiliar_Forecast(df_completo = df_completo_projetado, # DF filtrado somente a abertura e Endog, ordenado com a data mais antiga no topo
                                                                                                                                     df_inputs_exogenas = df_inputs_exogenas,
                                                                                                                                     df_parametros = df_parametros,
@@ -511,7 +541,8 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
                                                                                                                                       limite_delta_vol = limite_delta_vol,
                                                                                                                                       limite_delta_share = limite_delta_share,
                                                                                                                                       limite_delta_aberta = limite_delta_aberta,
-                                                                                                                                    fit_intercept = fit_intercept)
+                                                                                                                                    fit_intercept = fit_intercept,
+                                                                                                                                   limite_proj = limite_proj)
 
 
     # Atualizamos as bases periféricas:
@@ -524,6 +555,7 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
     matriz_forecast_a = pd.DataFrame()
 
     # Realizamos a contenção de danos:
+    '''
     endog_projetada,mensagem,base_contencao_de_danos_local = contencao_de_danos(df = df_completo_projetado, # filtrado na etapa e abertura
                                                                           endogenous = endogenous,
                                                                           col_data = col_data,
@@ -543,11 +575,11 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
 
     # Atualizamos as bases periféricas:
     base_contencao_de_danos = pd.concat([base_contencao_de_danos,base_contencao_de_danos_local])
-
+    '''
   # Removemos os shares projetados que não fazem sentido
   if endogenous != 's__Coincident':
     df_completo_projetado.loc[df_completo_projetado[endogenous] < 0,[endogenous]] = 0.0
-    df_completo_projetado.loc[df_completo_projetado[endogenous] > 1,[endogenous]] = 1
+    df_completo_projetado.loc[df_completo_projetado[endogenous] > limite_proj,[endogenous]] = limite_proj
 
 
   # Vamos adicionar os parâmetros calculados da cohort aberta aos de volume e shares:
@@ -585,13 +617,15 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       # Caso a conta resulte em algum número >100% ou <0, vamos remover aqui:
       valores = df_completo_projetado[cohorts_projetadas[i]].values
       valores = np.where(valores<0,0,valores)
-      valores = np.where(valores>1,1,valores)
+      valores = np.where(valores>limite_proj,limite_proj,valores)
       df_completo_projetado[cohorts_projetadas[i]] = valores
       
+
     # Caso seja uma abertura clusterizada, vamos forçar a existência do share de 100% da última,
     # assim garantimos que a cohort aberta vai ser a definida pelo cluster, já que os shares
     # das fechadas são médias que podem não bater 100% a aberta definida.
     elif tipo_de_projecao == 'Cluster' and i == len(cohorts_projetadas)-1:
+
 
       df_completo_projetado.loc[df_completo_projetado[col_data] > data_limite_hist, [cohorts_projetadas[i]]] =\
       1*\
@@ -601,7 +635,8 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       # Caso a conta resulte em algum número >100% ou <0, vamos remover aqui:
       valores = df_completo_projetado[cohorts_projetadas[i]].values
       valores = np.where(valores<0,0,valores)
-      valores = np.where(valores>1,1,valores)
+      valores = np.where(valores>limite_proj,limite_proj,valores)
+
       df_completo_projetado[cohorts_projetadas[i]] = valores
 
     else:
@@ -615,7 +650,7 @@ def forecast_2(df_completo,      # DataFrame filtrado, somente datas e valores
       # Caso a conta resulte em algum número >100% ou <0, vamos remover aqui:
       valores = df_completo_projetado[cohorts_projetadas[i]].values
       valores = np.where(valores<0,0,valores)
-      valores = np.where(valores>1,1,valores)
+      valores = np.where(valores>limite_proj,limite_proj,valores)
       df_completo_projetado[cohorts_projetadas[i]] = valores
 
     #print(df_completo_projetado.loc[df_completo_projetado[col_data] >= data_limite_hist, [col_data,cohorts_projetadas[i],conversoes[i],'%__Volume Aberta']])

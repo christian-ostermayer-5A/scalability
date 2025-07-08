@@ -1,5 +1,6 @@
 #@title Funções Auxiliares Funil Dinâmico
-
+import numpy as np
+import pandas as pd
 '''
 Nesta célula definimos inúmeras funções auxiliares que são usadas frequentemente em outras partes do código.
 

@@ -1,6 +1,6 @@
 #@title Def transforma_exogs_2
 import timeit
-
+import numpy as np
 '''
 Essa função serve para realizar as transformações "laged" ou "diferenciated" na base historica e
 base futura das variáveis exogenas que assim foram transformadas e identificadas e salvas no modelo

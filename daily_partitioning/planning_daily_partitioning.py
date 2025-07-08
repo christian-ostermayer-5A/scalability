@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 from redutor_de_base import *
+from rounding_tool import *
 
 # Gera uma proxi de base diária a partir da base semanal
 
@@ -207,7 +208,8 @@ def quebra_diaria(volumes_semanais,  # DataFrame com os volumes semanais coincid
                   impactos_feriados, # DataFrame com os impactos de feriado
                   share_cidades,     # DataFrame com o share das cidades dentro das regiões
                   topo_de_funil,     # Lista com os nomes das colunas que representam as etapas de topo de funil
-                  base_diaria_ToF):  # Dataframe importado no início do código  
+                  base_diaria_ToF,   # Dataframe importado no início do código
+                 round_output = False):    
   
 
   # Definições iniciais
@@ -327,6 +329,7 @@ def quebra_diaria(volumes_semanais,  # DataFrame com os volumes semanais coincid
     base_diaria = pd.merge(base_diaria,base_feriados,how='left',on=['data']).fillna(1)
     values = list(set(base_diaria.columns.values) - set(aberturas_das_bases + ['semana','data','dia da semana','mês', 'ano','região']))
     base_diaria = base_diaria.groupby(aberturas_das_bases + ['semana','data','dia da semana','mês', 'ano'],as_index=False)[values].mean()
+
     
   #base_diaria[etapas_impactos] = base_diaria[etapas_impactos].fillna(1)
   #base_diaria.dropna(axis=0, how='any', inplace=True)
@@ -612,9 +615,17 @@ def quebra_diaria(volumes_semanais,  # DataFrame com os volumes semanais coincid
     # Remover linhas completamente zeradas:
     base_diaria = redutor_de_base(df = base_diaria,
                                   col_valores = etapas)
+
+    
   
   # Fim dos cálculos
   #_________________________________________________________________________________________________
-  
+
+  # Arredondar output final
+  if round_output:
+    base_diaria = rounding_tool(df = base_diaria,
+                                aberturas = ['ano','mês', 'dia da semana','data','semana']+building_blocks+aberturas_das_bases,
+                                col_valores = etapas,
+                                ordem_hirarquica = ['data']+aberturas_das_bases)
 
   return base_diaria

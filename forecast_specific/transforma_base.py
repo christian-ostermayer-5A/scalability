@@ -1,5 +1,16 @@
 #@title Def transforma_base
+import pandas as pd
+import numpy as np
+import datetime
+from datetime import datetime
+import calendar
+from week_of_month import week_of_month
+from adiciona_feriados import adiciona_feriados
 
+#@title Def adiciona_feriados
+
+
+                            
 '''
 Recebe uma base com as seguintes colunas:
 
@@ -21,7 +32,7 @@ def transforma_base(df_conversoes,
                     df_targets,
                     data_end_forecast,
                     ultima_data_hist):
-
+                          
 
   # Vamos fazer algumas definições iniciais sobre a base
   cb_conversoes = list(df_conversoes.columns.values) # Colunas no cabeçalho
@@ -37,7 +48,7 @@ def transforma_base(df_conversoes,
 
   # Definir automaticamente a coluna de região:
   # @ aqui melhorar
-  if "city_group" not in list(df_exogenous.columns.values):
+  if "city_group" not in list(df_exogenous.columns.values) and len(df_exogenous) > 0:
     col_regiao = "city_group_tier"
   else:
     col_regiao = "city_group"

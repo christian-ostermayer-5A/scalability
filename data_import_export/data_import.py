@@ -261,3 +261,4 @@ def abertura_das_bases(lista_de_nomes_das_bases,  # lista de strings com os nome
     flag_abriu = False
   
   return lista_de_bases,flag_abriu
+

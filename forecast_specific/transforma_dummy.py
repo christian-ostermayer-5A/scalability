@@ -1,5 +1,5 @@
 #@title Def transforma_dummy
-
+import numpy as np
 
 '''
 Algumas séries exógenas servem para avaliar impactos de momentos no tempo na variável endógena.

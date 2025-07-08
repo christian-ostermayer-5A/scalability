@@ -1,5 +1,14 @@
 #@title Def treina_melhores_exogs_e_lags (AG 0)
 import timeit
+from datetime import timedelta
+import pandas as pd
+import numpy as np
+from remove_historico_zerado import remove_historico_zerado
+from tempo_maturacao import tempo_maturacao
+from aplica_teste import aplica_teste
+from data_export import *
+from clear___output import *
+
 def treina_melhores_exogs_e_lags(df_completo,      # DataFrame completo
                                 df_inputs_exogenas,
                                 df_sanity_check,

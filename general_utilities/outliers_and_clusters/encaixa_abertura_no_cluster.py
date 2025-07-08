@@ -1,4 +1,6 @@
 #@title Def encaixa_abertura_no_cluster_por_relevancia
+import numpy as np
+import pandas as pd
 
 def encaixa_abertura_no_cluster_por_relevancia(df_aberturas_ruins,
                                               df_base_clusters,

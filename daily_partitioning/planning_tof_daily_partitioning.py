@@ -2,6 +2,7 @@
 
 # Importando bibliotecas necessárias
 from planning_daily_partitioning import *
+from rounding_tool import *
 
 def recalcula_share_diario(ToF_diarizado, topos_de_funil):
   '''
@@ -123,7 +124,8 @@ def quebra_diaria_ToF_2(df_ToF_semanal,     # Dataframe com os volumes semanais 
                       nome_coluna_week_origin,
                       coluna_de_semanas,
                       topos,
-                      aberturas_das_bases):    
+                      aberturas_das_bases,
+                       round_output = False):    
 
   if len(df_ToF_mensal)>0:
 
@@ -222,7 +224,7 @@ def quebra_diaria_ToF_2(df_ToF_semanal,     # Dataframe com os volumes semanais 
       print('Valores negativos substituídos por zero: o total mensal não irá bater')
 
       # Removendo valores negativos
-      ToF_diarizado[topos_de_funil] = ToF_diarizado[topos_de_funil].clip(lower=0)
+      #ToF_diarizado[topos_de_funil] = ToF_diarizado[topos_de_funil].clip(lower=0)
     
 
     # Redefinindo ToF semanal após a redistribuição
@@ -230,6 +232,20 @@ def quebra_diaria_ToF_2(df_ToF_semanal,     # Dataframe com os volumes semanais 
     n_ToF_semanal = n_ToF_semanal.fillna(0)
 
     ToF_diarizado['data'] = pd.to_datetime(ToF_diarizado['data'], infer_datetime_format=True)
+
+    ToF_diarizado = ToF_diarizado[['data','semana','mês','ano','dia da semana']+aberturas+topos_de_funil]
+
+    # Arredondamos os valores finais:
+    if round_output:
+      n_ToF_semanal = rounding_tool(df = n_ToF_semanal,
+                                    aberturas = ['week start']+aberturas,
+                                    col_valores = topos_de_funil,
+                                    ordem_hirarquica = ['data']+aberturas_das_bases)
+  
+      ToF_diarizado = rounding_tool(df = ToF_diarizado,
+                                    aberturas = ['data','semana','mês','ano','dia da semana']+aberturas,
+                                    col_valores = topos_de_funil,
+                                    ordem_hirarquica = ['data']+aberturas_das_bases)
 
     print("_______________________________________")
     print("Correção dos valores mensais finalizada")

@@ -1,5 +1,7 @@
 #@title Def base_de_inputs
 from itertools import product
+import pandas as pd
+import numpy as np
 
 def base_de_inputs(df_inputs,  # DataFrame contendo os inputs
                    modelo,     # Só precisa ser um DataFrame contendo todos os ítens de todas as [aberturas + 'Week Origin']

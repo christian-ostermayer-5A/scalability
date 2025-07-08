@@ -1,5 +1,6 @@
 #@title Def analise_componentes_tof
-
+import numpy as np
+import pandas as pd
 
 def analise_componentes_tof(df_forecast_cohort,
                                  df_forecast_diario,

@@ -1,4 +1,7 @@
 #@title Def check_inputs_exogenas
+import pandas as pd
+import numpy as np
+from colored import colored
 
 def check_inputs_exogenas(df_inputs,
                           col_valores_exogenas,
@@ -15,7 +18,7 @@ def check_inputs_exogenas(df_inputs,
   # Checando o conteúdo das colunas:
 
   shares_permitidos = ['Share W'+str(s) for s in range(max_origin)]
-  lags_permitidos = [str(l) for l in range(max_lag)]
+  lags_permitidos = [str(l) for l in range(max_lag+1)]
   meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
   colunas = ['etapa','endógena','ação','exógena','lag ou diff','slope sanity check']
@@ -30,7 +33,7 @@ def check_inputs_exogenas(df_inputs,
                               ['Volume','Cohort Aberta']+shares_permitidos,
                               ['Incluir','Check'],
                               ['ordem_semana','Tempo Numérico','Feriado','Year','Volume']+meses+col_valores_exogenas,
-                              ['d']+lags_permitidos,
+                              ['d']+lags_permitidos+['log'],
                               ['-1','0','1']]
 
   for i in range(len(colunas)):
@@ -84,6 +87,8 @@ def check_inputs_exogenas(df_inputs,
 
   df_inputs.name = nome
   return df_inputs,df_sanity_check,mensagem,erro
+
+
 
 #__________________________________________________________________________________________________
 
