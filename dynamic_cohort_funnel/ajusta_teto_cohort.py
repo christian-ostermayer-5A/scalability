@@ -33,7 +33,7 @@ def ajusta_teto_cohort(df_cohort,nome_coluna_week_origin):
   for etapa in list(df_cohort.columns[(1+posi_pre_inicio_dados):]):
     df_out.loc[(df_out[f"{etapa}_aberta"] > 1),[etapa]] = df_out[etapa] * (1/df_out[f"{etapa}_aberta"])
 
-    if len(df_out.loc[df_out[f"{etapa}_aberta"] > 1]) > 0:
+    if len(df_out.loc[df_out[f"{etapa}_aberta"] > 1.00001]) > 0:
       df_print = df_out.loc[df_out[f"{etapa}_aberta"] > 1]
       df_print = df_print.iloc[:,1:posi_pre_inicio_dados]
       df_print = df_print.drop_duplicates()
