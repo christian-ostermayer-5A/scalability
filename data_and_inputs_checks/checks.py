@@ -2051,7 +2051,7 @@ def process_conversions_above_100(df, key_columns, value_columns, conversion_col
     
     return df
   
-def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoes,coluna_idx_cohort='week origin'):
+def verifica_baseline_v2(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoes,ultima_semana_cohort,coluna_idx_cohort='week origin'):
 
   mensagem = ''
   contagem_de_erros = 0
@@ -2122,8 +2122,9 @@ def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoe
     contagem_de_erros += 1
 
   #--------------------
-  #verifica se existem aberturas com valor na w5 porém coincident nula
-  df_w5 = df_baseline[df_baseline[coluna_idx_cohort] == '5']
+  #verifica se existem aberturas com valor na última week_origin da cohort porém coincident nula
+  ultima_semana_cohort_str = str(ultima_semana_cohort)
+  df_w5 = df_baseline[df_baseline[coluna_idx_cohort] == ultima_semana_cohort_str]
   df_coincident = df_baseline[df_baseline[coluna_idx_cohort] == 'Coincident']
   for coluna in colunas_conversoes:
     df_w5_aux = df_w5[df_w5[coluna] > 0.00001]
@@ -2131,10 +2132,11 @@ def verifica_baseline(nome_do_arquivo,df_baseline,lista_chaves,colunas_conversoe
     df_merge = df_merge[df_merge[f'{coluna}_y'] == 0]
     if len(df_merge.index) > 0:
       df_merge = df_merge[lista_chaves]
-      mensagem = mensagem + f'\n \n Atenção! As seguintes aberturas de \033[1;33mbaseline\033[0;0;0m do arquivo \033[1;34m{nome_do_arquivo}\033[0;0;0m contém valores de \033[1;33m{coluna}\033[0;0;0m para W5 mas não contém nenhum dado para "Coincident". \n {tabulate(df_merge, headers=list(df_merge.columns), tablefmt="psql")}'
+      mensagem = mensagem + f'\n \n Atenção! As seguintes aberturas de \033[1;33mbaseline\033[0;0;0m do arquivo \033[1;34m{nome_do_arquivo}\033[0;0;0m contém valores de \033[1;33m{coluna}\033[0;0;0m para W{ultima_semana_cohort} mas não contém nenhum dado para "Coincident". \n {tabulate(df_merge, headers=list(df_merge.columns), tablefmt="psql")}'
       contagem_de_erros += 1
   
   return mensagem, contagem_de_erros
+
 
 
 
