@@ -47,7 +47,7 @@ def sandbox_dataframe_upload(df,
 
   gsheets_client = GoogleSheetsClient(credentials, scope, timeout=TIMEOUT_LIMIT)
   spark_client = SparkClient()
-
+  s3_loader = S3Loader()
   gsheets_consumer = GsheetsConsumer(gsheets_client, spark_client)
 
   # REMOVE THIS BLOCK:
