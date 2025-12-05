@@ -28,7 +28,7 @@ import os
 import re
 
 
-def sandbox_dataframe_upload(df, 
+def sandbox_dataframe_upload(spark_df_input, 
                              table_name,
                              TIMEOUT_LIMIT = 300):
   
