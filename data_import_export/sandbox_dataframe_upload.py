@@ -50,21 +50,14 @@ def sandbox_dataframe_upload(df,
 
   gsheets_consumer = GsheetsConsumer(gsheets_client, spark_client)
 
+  # REMOVE THIS BLOCK:
+  # from pyspark.sql import SparkSession
+  # spark = SparkSession.builder.getOrCreate()
+  # spark_df = spark.createDataFrame(df)  <--- THIS LINE IS GONE!
 
-
-  # Importar SparkSession se não estiver disponível
-  from pyspark.sql import SparkSession
-
-  # Criar uma SparkSession se não existir
-  spark = SparkSession.builder.getOrCreate()
-
-  # Converter o Pandas DataFrame para Spark DataFrame
-  spark_df = spark.createDataFrame(df)
-
-  storage_file_format = SparkTableStorageFormat.get_storage(layer)
-  s3_loader = S3Loader()
+  # Use the input Spark DataFrame directly
   s3_loader.load_df(
-      df=spark_df,
+      df=spark_df_input, # <-- Use the input variable directly
       s3_path=f"{database_location}/{table_name}",
       format_options=storage_file_format,
   )
