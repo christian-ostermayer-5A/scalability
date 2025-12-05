@@ -28,11 +28,12 @@ import os
 import re
 
 
-def sandbox_dataframe_upload(spark_df_input, 
+def sandbox_dataframe_upload(df, 
                              table_name,
                              TIMEOUT_LIMIT = 300):
-  
+
   assert re.match(r'^[a-zA-Z][\w\-|]+$|^$', table_name), "Invalid table name parameter: must start with a letter and use only letters (upper or lower cases), numbers, hyphens or underscores."
+
 
   environment="prod"
   sandbox_bucket="5a-sandbox-prod"
@@ -44,33 +45,35 @@ def sandbox_dataframe_upload(spark_df_input,
 
   credentials=json.loads(dbutils.secrets.get(scope="quintoandar", key=APIEnum.GSHEETS_CREDENTIALS))
   scope = credentials.pop("scope")
-
   gsheets_client = GoogleSheetsClient(credentials, scope, timeout=TIMEOUT_LIMIT)
   spark_client = SparkClient()
-  s3_loader = S3Loader()
+
   gsheets_consumer = GsheetsConsumer(gsheets_client, spark_client)
 
-  # REMOVE THIS BLOCK:
-  # from pyspark.sql import SparkSession
-  # spark = SparkSession.builder.getOrCreate()
-  # spark_df = spark.createDataFrame(df)  <--- THIS LINE IS GONE!
+  # Importar SparkSession se não estiver disponível
 
-  # Use the input Spark DataFrame directly
+  from pyspark.sql import SparkSession
+  # Criar uma SparkSession se não existir
+  spark = SparkSession.builder.getOrCreate()
+  # Converter o Pandas DataFrame para Spark DataFrame
+  spark_df = df#spark.createDataFrame(df)
+
+  storage_file_format = SparkTableStorageFormat.get_storage(layer)
+  s3_loader = S3Loader()
   s3_loader.load_df(
-      df=spark_df_input, # <-- Use the input variable directly
+      df=spark_df,
       s3_path=f"{database_location}/{table_name}",
       format_options=storage_file_format,
   )
+
   # Carregar o DataFrame no S3 usando o Spark DataFrame
 
   spark_metastore_service = SparkMetastoreService(spark_client)
   spark_metastore_loader = SparkMetastoreLoader(spark_metastore_service)
-
   spark_metastore_service.create_database(database_name)
   spark_metastore_loader.update_metastore(
     spark_df, database_name, table_name, storage_file_format, database_location
   )
-
 
   hive_ms_host = json.loads(dbutils.secrets.get("quintoandar", DatabaseEnum.HIVE_METASTORE))["host"]
   hive_ms_client = HiveMetastoreClient(hive_ms_host)
